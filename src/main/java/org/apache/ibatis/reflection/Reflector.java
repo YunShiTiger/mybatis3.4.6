@@ -339,18 +339,22 @@ public class Reflector {
 			}
 			//检测对应的字段是否可以访问
 			if (field.isAccessible()) {
-				
+				//检测在对应的set属性方法中是否有对应的本字段对应的属性方法
 				if (!setMethods.containsKey(field.getName())) {
 					// issue #379 - removed the check for final because JDK 1.5 allows
 					// modification of final fields through reflection (JSR-133). (JGB)
 					// pr #16 - final static can only be set by the classloader
+					//获取字段的描述信息
 					int modifiers = field.getModifiers();
+					//排除静态和final类型的字段属性
 					if (!(Modifier.isFinal(modifiers) && Modifier.isStatic(modifiers))) {
+						//将对应的字段属性添加到对应的set属性集合中----------------------------------->此处完成了将只有对应的字段没有对应的set方法的那种字段属性添加到set集合中的处理
 						addSetField(field);
 					}
 				}
-				//
+				//检测在对应的get属性方法中是否有对应的本字段对应的属性方法
 				if (!getMethods.containsKey(field.getName())) {
+					//将对应的字段属性添加到对应的get属性集合中----------------------------------->此处完成了将只有对应的字段没有对应的get方法的那种字段属性添加到set集合中的处理
 					addGetField(field);
 				}
 			}
@@ -361,17 +365,29 @@ public class Reflector {
 		}
 	}
 
+	/*
+	 * 将对应的字段属性添加到对应的set集合中
+	 */
 	private void addSetField(Field field) {
+		//检测对应的字段名是否合法
 		if (isValidPropertyName(field.getName())) {
+			//将对应的字段名和对应的设置字段的方法添加到集合中
 			setMethods.put(field.getName(), new SetFieldInvoker(field));
+			//解析字段的类型
 			Type fieldType = TypeParameterResolver.resolveFieldType(field, type);
 			setTypes.put(field.getName(), typeToClass(fieldType));
 		}
 	}
 
+	/*
+	 * 将对应的字段属性添加到对应的get集合中
+	 */
 	private void addGetField(Field field) {
+		//检测对应的字段名是否合法
 		if (isValidPropertyName(field.getName())) {
+			//将对应的字段名和对应的获取字段的方法添加到集合中
 			getMethods.put(field.getName(), new GetFieldInvoker(field));
+			//解析字段的类型
 			Type fieldType = TypeParameterResolver.resolveFieldType(field, type);
 			getTypes.put(field.getName(), typeToClass(fieldType));
 		}
@@ -472,6 +488,9 @@ public class Reflector {
 		return type;
 	}
 
+	/*
+	 * 获取类对象对应的默认构造函数
+	 */
 	public Constructor<?> getDefaultConstructor() {
 		if (defaultConstructor != null) {
 			return defaultConstructor;
@@ -480,10 +499,16 @@ public class Reflector {
 		}
 	}
 
+	/*
+	 * 检测是否设置了对应的默认构造函数
+	 */
 	public boolean hasDefaultConstructor() {
 		return defaultConstructor != null;
 	}
 
+	/*
+	 * 获取对应属性对应的设置属性的执行器对象
+	 */
 	public Invoker getSetInvoker(String propertyName) {
 		Invoker method = setMethods.get(propertyName);
 		if (method == null) {
@@ -492,6 +517,9 @@ public class Reflector {
 		return method;
 	}
 
+	/*
+	 * 获取对应属性对应的获取属性的执行器对象
+	 */
 	public Invoker getGetInvoker(String propertyName) {
 		Invoker method = getMethods.get(propertyName);
 		if (method == null) {
