@@ -1,18 +1,3 @@
-/**
- *    Copyright 2009-2016 the original author or authors.
- *
- *    Licensed under the Apache License, Version 2.0 (the "License");
- *    you may not use this file except in compliance with the License.
- *    You may obtain a copy of the License at
- *
- *       http://www.apache.org/licenses/LICENSE-2.0
- *
- *    Unless required by applicable law or agreed to in writing, software
- *    distributed under the License is distributed on an "AS IS" BASIS,
- *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *    See the License for the specific language governing permissions and
- *    limitations under the License.
- */
 package org.apache.ibatis.session;
 
 import java.io.IOException;
@@ -26,12 +11,17 @@ import org.apache.ibatis.executor.ErrorContext;
 import org.apache.ibatis.session.defaults.DefaultSqlSessionFactory;
 
 /**
- * Builds {@link SqlSession} instances.
- *
- * @author Clinton Begin
+ * 构建SqlSessionFactory的构建器处理类  
+ * 通过分析可以发现: 内部有三种方式来进行创建对应的SqlSessionFactory对象
+ *     1.通过对应的字符流对象进行创建
+ *     2.通过对应的字节流对象进行创建
+ *     3.直接通过生成配置对象来进行构建
  */
 public class SqlSessionFactoryBuilder {
 
+	/**
+	 * 通过多种字符流对象的方式来配置SqlSessionFactory的处理
+	 */
 	public SqlSessionFactory build(Reader reader) {
 		return build(reader, null, null);
 	}
@@ -44,15 +34,19 @@ public class SqlSessionFactoryBuilder {
 		return build(reader, null, properties);
 	}
 
+	//使用字符流方式构建对象最终要走的地方
 	public SqlSessionFactory build(Reader reader, String environment, Properties properties) {
 		try {
+			//通过传入的字符流对象 环境参数 属性对象 来构建配置Xml的解析器对象
 			XMLConfigBuilder parser = new XMLConfigBuilder(reader, environment, properties);
+			//进行解析对应的xml文件并构建对应的SqlSessionFactory对象----------------------------------------->核心操作   解析对应的xml配置文件的处理
 			return build(parser.parse());
 		} catch (Exception e) {
 			throw ExceptionFactory.wrapException("Error building SqlSession.", e);
 		} finally {
 			ErrorContext.instance().reset();
 			try {
+				//关闭对应的流对象
 				reader.close();
 			} catch (IOException e) {
 				// Intentionally ignore. Prefer previous error.
@@ -60,6 +54,9 @@ public class SqlSessionFactoryBuilder {
 		}
 	}
 
+	/**
+	 * 通过多种字节流对象的方式来配置SqlSessionFactory的处理
+	 */
 	public SqlSessionFactory build(InputStream inputStream) {
 		return build(inputStream, null, null);
 	}
@@ -72,15 +69,19 @@ public class SqlSessionFactoryBuilder {
 		return build(inputStream, null, properties);
 	}
 
+	//使用字节流方式构建对象最终要走的地方
 	public SqlSessionFactory build(InputStream inputStream, String environment, Properties properties) {
 		try {
+			//通过传入的字节流对象 环境参数 属性对象 来构建配置Xml的解析器对象
 			XMLConfigBuilder parser = new XMLConfigBuilder(inputStream, environment, properties);
+			//进行解析对应的xml文件并构建对应的SqlSessionFactory对象----------------------------------------->核心操作   解析对应的xml配置文件的处理
 			return build(parser.parse());
 		} catch (Exception e) {
 			throw ExceptionFactory.wrapException("Error building SqlSession.", e);
 		} finally {
 			ErrorContext.instance().reset();
 			try {
+				//关闭对应的流对象
 				inputStream.close();
 			} catch (IOException e) {
 				// Intentionally ignore. Prefer previous error.
@@ -88,6 +89,10 @@ public class SqlSessionFactoryBuilder {
 		}
 	}
 
+	/**
+	 * 通过直接传入配置类对象的方式来配置SqlSessionFactory的处理
+	 */
+	//此处是构建SqlSessionFactory对象必须要走的地方
 	public SqlSessionFactory build(Configuration config) {
 		return new DefaultSqlSessionFactory(config);
 	}

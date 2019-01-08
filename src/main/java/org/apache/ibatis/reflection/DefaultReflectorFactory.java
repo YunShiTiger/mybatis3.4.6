@@ -1,53 +1,52 @@
-/**
- *    Copyright 2009-2015 the original author or authors.
- *
- *    Licensed under the Apache License, Version 2.0 (the "License");
- *    you may not use this file except in compliance with the License.
- *    You may obtain a copy of the License at
- *
- *       http://www.apache.org/licenses/LICENSE-2.0
- *
- *    Unless required by applicable law or agreed to in writing, software
- *    distributed under the License is distributed on an "AS IS" BASIS,
- *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *    See the License for the specific language governing permissions and
- *    limitations under the License.
- */
 package org.apache.ibatis.reflection;
 
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
+/**
+ * 默认的处理反射对象的工厂------->主要完成了缓存操作处理
+ */
 public class DefaultReflectorFactory implements ReflectorFactory {
-  private boolean classCacheEnabled = true;
-  private final ConcurrentMap<Class<?>, Reflector> reflectorMap = new ConcurrentHashMap<Class<?>, Reflector>();
+	
+	//用于标识是否开启对应的缓存操作处理
+	private boolean classCacheEnabled = true;
+	//用于记录对应的已经解析的类的反射处理类------------>注意这个地方使用的具有线程同步操作处理的map集合对象
+	private final ConcurrentMap<Class<?>, Reflector> reflectorMap = new ConcurrentHashMap<Class<?>, Reflector>();
 
-  public DefaultReflectorFactory() {
-  }
+	public DefaultReflectorFactory() {
+		
+	}
 
-  @Override
-  public boolean isClassCacheEnabled() {
-    return classCacheEnabled;
-  }
+	@Override
+	public boolean isClassCacheEnabled() {
+		return classCacheEnabled;
+	}
 
-  @Override
-  public void setClassCacheEnabled(boolean classCacheEnabled) {
-    this.classCacheEnabled = classCacheEnabled;
-  }
+	@Override
+	public void setClassCacheEnabled(boolean classCacheEnabled) {
+		this.classCacheEnabled = classCacheEnabled;
+	}
 
-  @Override
-  public Reflector findForClass(Class<?> type) {
-    if (classCacheEnabled) {
-            // synchronized (type) removed see issue #461
-      Reflector cached = reflectorMap.get(type);
-      if (cached == null) {
-        cached = new Reflector(type);
-        reflectorMap.put(type, cached);
-      }
-      return cached;
-    } else {
-      return new Reflector(type);
-    }
-  }
+	@Override
+	public Reflector findForClass(Class<?> type) {
+		//检测是否开启了缓存功能
+		if (classCacheEnabled) {
+			// synchronized (type) removed see issue #461
+			//首先在对应的缓存集合中查询是否有对应的解析完成的反射处理类
+			Reflector cached = reflectorMap.get(type);
+			//检测是否在缓存对象中找到对应的反射处理类
+			if (cached == null) {
+				//创建并解析对应的反射处理类
+				cached = new Reflector(type);
+				//将对应的解析完成的反射处理类放置到缓存集合中进行存储处理
+				reflectorMap.put(type, cached);
+			}
+			//返回对应的反射处理类对象
+			return cached;
+		} else {
+			//没有开始缓存功能,就直接创建对应的反射处理类对象
+			return new Reflector(type);
+		}
+	}
 
 }

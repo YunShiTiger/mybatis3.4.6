@@ -1,18 +1,3 @@
-/**
- *    Copyright 2009-2015 the original author or authors.
- *
- *    Licensed under the Apache License, Version 2.0 (the "License");
- *    you may not use this file except in compliance with the License.
- *    You may obtain a copy of the License at
- *
- *       http://www.apache.org/licenses/LICENSE-2.0
- *
- *    Unless required by applicable law or agreed to in writing, software
- *    distributed under the License is distributed on an "AS IS" BASIS,
- *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *    See the License for the specific language governing permissions and
- *    limitations under the License.
- */
 package org.apache.ibatis.io;
 
 import java.io.File;
@@ -26,247 +11,209 @@ import java.nio.charset.Charset;
 import java.util.Properties;
 
 /**
- * A class to simplify access to resources through the classloader.
- *
- * @author Clinton Begin
+ * 通过对应的类加载器来简化对指定资源的加载操作处理
  */
 public class Resources {
 
-  private static ClassLoaderWrapper classLoaderWrapper = new ClassLoaderWrapper();
+	private static ClassLoaderWrapper classLoaderWrapper = new ClassLoaderWrapper();
 
-  /*
-   * Charset to use when calling getResourceAsReader.
-   * null means use the system default.
-   */
-  private static Charset charset;
+	//记录创建对应字符流对象时对应的字符编码方式
+	private static Charset charset;
 
-  Resources() {
-  }
+	Resources() {
+		
+	}
 
-  /*
-   * Returns the default classloader (may be null).
-   *
-   * @return The default classloader
-   */
-  public static ClassLoader getDefaultClassLoader() {
-    return classLoaderWrapper.defaultClassLoader;
-  }
+	/*
+	 * 获取默认的类加载器对象
+	 */
+	public static ClassLoader getDefaultClassLoader() {
+		return classLoaderWrapper.defaultClassLoader;
+	}
 
-  /*
-   * Sets the default classloader
-   *
-   * @param defaultClassLoader - the new default ClassLoader
-   */
-  public static void setDefaultClassLoader(ClassLoader defaultClassLoader) {
-    classLoaderWrapper.defaultClassLoader = defaultClassLoader;
-  }
+	/*
+	 * 设置默认的类加载器对象
+	 */
+	public static void setDefaultClassLoader(ClassLoader defaultClassLoader) {
+		classLoaderWrapper.defaultClassLoader = defaultClassLoader;
+	}
 
-  /*
-   * Returns the URL of the resource on the classpath
-   *
-   * @param resource The resource to find
-   * @return The resource
-   * @throws java.io.IOException If the resource cannot be found or read
-   */
-  public static URL getResourceURL(String resource) throws IOException {
-      // issue #625
-      return getResourceURL(null, resource);
-  }
+	/*
+	 * 根据提供的资源路径和默认的类加载创建对应的资源统一定位对象
+	 */
+	public static URL getResourceURL(String resource) throws IOException {
+		return getResourceURL(null, resource);
+	}
 
-  /*
-   * Returns the URL of the resource on the classpath
-   *
-   * @param loader   The classloader used to fetch the resource
-   * @param resource The resource to find
-   * @return The resource
-   * @throws java.io.IOException If the resource cannot be found or read
-   */
-  public static URL getResourceURL(ClassLoader loader, String resource) throws IOException {
-    URL url = classLoaderWrapper.getResourceAsURL(resource, loader);
-    if (url == null) {
-      throw new IOException("Could not find resource " + resource);
-    }
-    return url;
-  }
+	/*
+	 * 根据提供的资源路径和指定的类加载创建对应的资源统一定位对象
+	 */
+	public static URL getResourceURL(ClassLoader loader, String resource) throws IOException {
+		//通过对应的类加载器来加载并创建对应的资源统一定位对象
+		URL url = classLoaderWrapper.getResourceAsURL(resource, loader);
+		if (url == null) {
+			throw new IOException("Could not find resource " + resource);
+		}
+		//返回资源的统一定位对象
+		return url;
+	}
 
-  /*
-   * Returns a resource on the classpath as a Stream object
-   *
-   * @param resource The resource to find
-   * @return The resource
-   * @throws java.io.IOException If the resource cannot be found or read
-   */
-  public static InputStream getResourceAsStream(String resource) throws IOException {
-    return getResourceAsStream(null, resource);
-  }
+	/*
+	 * 根据给定的资源路径和默认类加载来创建对应的流对象
+	 *  注意:
+	 *  如果对应的资源不存在或者不可读的情况下会触发抛出对应的异常信息
+	 */
+	public static InputStream getResourceAsStream(String resource) throws IOException {
+		return getResourceAsStream(null, resource);
+	}
 
-  /*
-   * Returns a resource on the classpath as a Stream object
-   *
-   * @param loader   The classloader used to fetch the resource
-   * @param resource The resource to find
-   * @return The resource
-   * @throws java.io.IOException If the resource cannot be found or read
-   */
-  public static InputStream getResourceAsStream(ClassLoader loader, String resource) throws IOException {
-    InputStream in = classLoaderWrapper.getResourceAsStream(resource, loader);
-    if (in == null) {
-      throw new IOException("Could not find resource " + resource);
-    }
-    return in;
-  }
+	/*
+	 * 根据给定的资源路径和指定类加载来创建对应的流对象
+	 *  注意:
+	 *  如果对应的资源不存在或者不可读的情况下会触发抛出对应的异常信息
+	 */
+	public static InputStream getResourceAsStream(ClassLoader loader, String resource) throws IOException {
+		//通过提供的类加载器来加载指定的资源并创建对应的流对象
+		InputStream in = classLoaderWrapper.getResourceAsStream(resource, loader);
+		//检测是否获取对应的流对象
+		if (in == null) {
+			//抛出对应的没有找到对应资源的异常
+			throw new IOException("Could not find resource " + resource);
+		}
+		//返回对应的流对象
+		return in;
+	}
 
-  /*
-   * Returns a resource on the classpath as a Properties object
-   *
-   * @param resource The resource to find
-   * @return The resource
-   * @throws java.io.IOException If the resource cannot be found or read
-   */
-  public static Properties getResourceAsProperties(String resource) throws IOException {
-    Properties props = new Properties();
-    InputStream in = getResourceAsStream(resource);
-    props.load(in);
-    in.close();
-    return props;
-  }
+	/*
+	 * 根据给定的资源路径和默认类加载来创建对应的属性对象
+	 *  注意:
+	 *  如果对应的资源不存在或者不可读的情况下会触发抛出对应的异常信息
+	 * 此处代码实现有点啰嗦  内部其实可以直接调用下一个方法进行实现
+	 */
+	public static Properties getResourceAsProperties(String resource) throws IOException {
+		//创建对应的属性对象
+		Properties props = new Properties();
+		//根据提供的路径创建对应的流对象
+		InputStream in = getResourceAsStream(resource);
+		//通过流对象中的内容来设置对应的属性对象
+		props.load(in);
+		//关闭对应的流对象
+		in.close();
+		//返回对应的属性对象
+		return props;
+	}
 
-  /*
-   * Returns a resource on the classpath as a Properties object
-   *
-   * @param loader   The classloader used to fetch the resource
-   * @param resource The resource to find
-   * @return The resource
-   * @throws java.io.IOException If the resource cannot be found or read
-   */
-  public static Properties getResourceAsProperties(ClassLoader loader, String resource) throws IOException {
-    Properties props = new Properties();
-    InputStream in = getResourceAsStream(loader, resource);
-    props.load(in);
-    in.close();
-    return props;
-  }
+	/*
+	 * 根据给定的资源路径和指定类加载来创建对应的属性对象
+	 *  注意:
+	 *  如果对应的资源不存在或者不可读的情况下会触发抛出对应的异常信息
+	 */
+	public static Properties getResourceAsProperties(ClassLoader loader, String resource) throws IOException {
+		//创建对应的属性对象
+		Properties props = new Properties();
+		//根据提供的路径创建对应的流对象
+		InputStream in = getResourceAsStream(loader, resource);
+		//通过流对象中的内容来设置对应的属性对象
+		props.load(in);
+		//关闭对应的流对象
+		in.close();
+		//返回对应的属性对象
+		return props;
+	}
 
-  /*
-   * Returns a resource on the classpath as a Reader object
-   *
-   * @param resource The resource to find
-   * @return The resource
-   * @throws java.io.IOException If the resource cannot be found or read
-   */
-  public static Reader getResourceAsReader(String resource) throws IOException {
-    Reader reader;
-    if (charset == null) {
-      reader = new InputStreamReader(getResourceAsStream(resource));
-    } else {
-      reader = new InputStreamReader(getResourceAsStream(resource), charset);
-    }
-    return reader;
-  }
+	/*
+	 * 根据提供的资源路径和默认的类加载获取对应的字符流对象
+	 */
+	public static Reader getResourceAsReader(String resource) throws IOException {
+		Reader reader;
+		if (charset == null) {
+			reader = new InputStreamReader(getResourceAsStream(resource));
+		} else {
+			reader = new InputStreamReader(getResourceAsStream(resource), charset);
+		}
+		return reader;
+	}
 
-  /*
-   * Returns a resource on the classpath as a Reader object
-   *
-   * @param loader   The classloader used to fetch the resource
-   * @param resource The resource to find
-   * @return The resource
-   * @throws java.io.IOException If the resource cannot be found or read
-   */
-  public static Reader getResourceAsReader(ClassLoader loader, String resource) throws IOException {
-    Reader reader;
-    if (charset == null) {
-      reader = new InputStreamReader(getResourceAsStream(loader, resource));
-    } else {
-      reader = new InputStreamReader(getResourceAsStream(loader, resource), charset);
-    }
-    return reader;
-  }
+	/*
+	 * 根据提供的资源路径和指定的类加载获取对应的字符流对象
+	 */
+	public static Reader getResourceAsReader(ClassLoader loader, String resource) throws IOException {
+		Reader reader;
+		if (charset == null) {
+			reader = new InputStreamReader(getResourceAsStream(loader, resource));
+		} else {
+			reader = new InputStreamReader(getResourceAsStream(loader, resource), charset);
+		}
+		return reader;
+	}
 
-  /*
-   * Returns a resource on the classpath as a File object
-   *
-   * @param resource The resource to find
-   * @return The resource
-   * @throws java.io.IOException If the resource cannot be found or read
-   */
-  public static File getResourceAsFile(String resource) throws IOException {
-    return new File(getResourceURL(resource).getFile());
-  }
+	/*
+	 * 根据提供的资源路径和默认类加载来创建对应的文件对象
+	 */
+	public static File getResourceAsFile(String resource) throws IOException {
+		//首先根据给定的资源路径获取对应的资源定位对象,然后根据资源定位对象获取对应的文件对象----------->这个地方一定要注意拿取的方式
+		return new File(getResourceURL(resource).getFile());
+	}
 
-  /*
-   * Returns a resource on the classpath as a File object
-   *
-   * @param loader   - the classloader used to fetch the resource
-   * @param resource - the resource to find
-   * @return The resource
-   * @throws java.io.IOException If the resource cannot be found or read
-   */
-  public static File getResourceAsFile(ClassLoader loader, String resource) throws IOException {
-    return new File(getResourceURL(loader, resource).getFile());
-  }
+	/*
+	 * 根据提供的资源路径和指定类加载来创建对应的文件对象
+	 */
+	public static File getResourceAsFile(ClassLoader loader, String resource) throws IOException {
+		return new File(getResourceURL(loader, resource).getFile());
+	}
 
-  /*
-   * Gets a URL as an input stream
-   *
-   * @param urlString - the URL to get
-   * @return An input stream with the data from the URL
-   * @throws java.io.IOException If the resource cannot be found or read
-   */
-  public static InputStream getUrlAsStream(String urlString) throws IOException {
-    URL url = new URL(urlString);
-    URLConnection conn = url.openConnection();
-    return conn.getInputStream();
-  }
+	/*
+	 * 根据提供的资源统一定位对象对应的资源路径获取对应的字节流对象
+	 */
+	public static InputStream getUrlAsStream(String urlString) throws IOException {
+		URL url = new URL(urlString);
+		//拿到资源定位对象对应的连接对象
+		URLConnection conn = url.openConnection();
+		//根据连接获取对应的流对象
+		return conn.getInputStream();
+	}
 
-  /*
-   * Gets a URL as a Reader
-   *
-   * @param urlString - the URL to get
-   * @return A Reader with the data from the URL
-   * @throws java.io.IOException If the resource cannot be found or read
-   */
-  public static Reader getUrlAsReader(String urlString) throws IOException {
-    Reader reader;
-    if (charset == null) {
-      reader = new InputStreamReader(getUrlAsStream(urlString));
-    } else {
-      reader = new InputStreamReader(getUrlAsStream(urlString), charset);
-    }
-    return reader;
-  }
+	/*
+	 * 根据提供的资源统一定位对象对应的资源路径获取对应的字符流对象
+	 */
+	public static Reader getUrlAsReader(String urlString) throws IOException {
+		Reader reader;
+		//检测是否设置了字符对应的编码方式
+		if (charset == null) {
+			//使用默认的编码方式获取对应的字符流对象
+			reader = new InputStreamReader(getUrlAsStream(urlString));
+		} else {
+			//使用指定的编码方式获取对应的字符流对象
+			reader = new InputStreamReader(getUrlAsStream(urlString), charset);
+		}
+		//返回对应的流对象
+		return reader;
+	}
 
-  /*
-   * Gets a URL as a Properties object
-   *
-   * @param urlString - the URL to get
-   * @return A Properties object with the data from the URL
-   * @throws java.io.IOException If the resource cannot be found or read
-   */
-  public static Properties getUrlAsProperties(String urlString) throws IOException {
-    Properties props = new Properties();
-    InputStream in = getUrlAsStream(urlString);
-    props.load(in);
-    in.close();
-    return props;
-  }
+	/*
+	 * 根据提供的统一资源定位对象对应的资源路径来创建对应的属性对象
+	 */
+	public static Properties getUrlAsProperties(String urlString) throws IOException {
+		Properties props = new Properties();
+		InputStream in = getUrlAsStream(urlString);
+		props.load(in);
+		in.close();
+		return props;
+	}
 
-  /*
-   * Loads a class
-   *
-   * @param className - the class to fetch
-   * @return The loaded class
-   * @throws ClassNotFoundException If the class cannot be found (duh!)
-   */
-  public static Class<?> classForName(String className) throws ClassNotFoundException {
-    return classLoaderWrapper.classForName(className);
-  }
+	/*
+	 * 根据提供的类名来加载对应的类对象
+	 */
+	public static Class<?> classForName(String className) throws ClassNotFoundException {
+		return classLoaderWrapper.classForName(className);
+	}
 
-  public static Charset getCharset() {
-    return charset;
-  }
+	public static Charset getCharset() {
+		return charset;
+	}
 
-  public static void setCharset(Charset charset) {
-    Resources.charset = charset;
-  }
+	public static void setCharset(Charset charset) {
+		Resources.charset = charset;
+	}
 
 }
