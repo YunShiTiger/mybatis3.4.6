@@ -21,6 +21,7 @@ public class ReflectorTest {
 		ReflectorFactory reflectorFactory = new DefaultReflectorFactory();
 		//获取对应类的反射处理类对象
 		Reflector reflector = reflectorFactory.findForClass(Section.class);
+		//测试获取id属性方法对应的参数类型
 		Assert.assertEquals(Long.class, reflector.getSetterType("id"));
 	}
 
@@ -28,6 +29,7 @@ public class ReflectorTest {
 	public void testGetGetterType() throws Exception {
 		ReflectorFactory reflectorFactory = new DefaultReflectorFactory();
 		Reflector reflector = reflectorFactory.findForClass(Section.class);
+		//测试设置id属性方法对应的返回值的类型
 		Assert.assertEquals(Long.class, reflector.getGetterType("id"));
 	}
 
@@ -35,6 +37,7 @@ public class ReflectorTest {
 	public void shouldNotGetClass() throws Exception {
 		ReflectorFactory reflectorFactory = new DefaultReflectorFactory();
 		Reflector reflector = reflectorFactory.findForClass(Section.class);
+		//测试没有找到对应的属性
 		Assert.assertFalse(reflector.hasGetter("class"));
 	}
 
@@ -64,6 +67,9 @@ public class ReflectorTest {
 
 	}
 
+	/*
+	 * 下面的测试用例主要完成对属性类型检测的测试用例
+	 */
 	@Test
 	public void shouldResolveSetterParam() throws Exception {
 		ReflectorFactory reflectorFactory = new DefaultReflectorFactory();
@@ -125,10 +131,15 @@ public class ReflectorTest {
 	}
 
 	static abstract class Parent<T extends Serializable> {
+		
 		protected T id;
+		//集合类型
 		protected List<T> list;
+		//数组类型
 		protected T[] array;
+		//私有类型
 		private T fld;
+		//共有类型
 		public T pubFld;
 
 		public T getId() {
@@ -164,6 +175,9 @@ public class ReflectorTest {
 
 	}
 
+	/*
+	 * 测试属性的覆盖测试用例
+	 */
 	@Test
 	public void shouldResoleveReadonlySetterWithOverload() throws Exception {
 		
@@ -184,11 +198,15 @@ public class ReflectorTest {
 		void setId(T id);
 	}
 
+	/*
+	 * 测试一个属性中出现了不同类型参数带来的影响
+	 */
 	@Test
 	public void shouldSettersWithUnrelatedArgTypesThrowException() throws Exception {
 		
 		@SuppressWarnings("unused")
 		class BeanClass {
+			
 			public void setTheProp(String arg) {
 				
 			}
@@ -203,6 +221,9 @@ public class ReflectorTest {
 		then(caughtException()).isInstanceOf(ReflectionException.class).hasMessageContaining("theProp").hasMessageContaining("BeanClass").hasMessageContaining("java.lang.String").hasMessageContaining("java.lang.Integer");
 	}
 
+	/*
+	 * 测试一个属性有不同形式的设置方式    get 或者 is 
+	 */
 	@Test
 	public void shouldAllowTwoBooleanGetters() throws Exception {
 		

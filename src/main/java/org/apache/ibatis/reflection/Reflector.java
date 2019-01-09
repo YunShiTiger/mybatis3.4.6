@@ -24,7 +24,8 @@ import org.apache.ibatis.reflection.invoker.SetFieldInvoker;
 import org.apache.ibatis.reflection.property.PropertyNamer;
 
 /**
- * This class represents a cached set of class definition information that allows for easy mapping between property names and getter/setter methods.
+ * 本类完成了对给定类的解析,从而可以以反射的方式来进行操作对应的类
+ * 本类主要完成对给定类的  字段解析 get或者is开头的方法 已经 以set开头的方法的解析  从而完全掌握对应的解析的类中所有可以读取或者设置的属性值,从而进行操纵对应的属性
  */
 public class Reflector {
 
@@ -32,15 +33,20 @@ public class Reflector {
 	private final Class<?> type;
 	//用于记录对应的解析类的默认构造函数
 	private Constructor<?> defaultConstructor;
+	//记录所有可以读取的属性名称
 	private final String[] readablePropertyNames;
+	//记录所有可以写入的属性名称
 	private final String[] writeablePropertyNames;
+	//记录所有可以读取的属性名称和对应的触发方法(以get或者is开头的方法 或者字段)
 	private final Map<String, Invoker> setMethods = new HashMap<String, Invoker>();
+	//记录所有可以写入的属性名称和对应的触发方法(以set开头的方法 或者字段)
 	private final Map<String, Invoker> getMethods = new HashMap<String, Invoker>();
+	//用于存储get类型方法或者字段  属性名称和对应的返回值类型(以set开头的方法 或者字段)
 	private final Map<String, Class<?>> setTypes = new HashMap<String, Class<?>>();
-	//用于存储get类型方法  属性名称和对应的返回值类型
+	//用于存储get类型方法或者字段  属性名称和对应的返回值类型(以get或者is开头的方法 或者字段)
 	private final Map<String, Class<?>> getTypes = new HashMap<String, Class<?>>();
 	
-
+	//用于存储不区分大小写的属性集合
 	private Map<String, String> caseInsensitivePropertyMap = new HashMap<String, String>();
 
 	public Reflector(Class<?> clazz) {
@@ -54,11 +60,15 @@ public class Reflector {
 		addSetMethods(clazz);
 		//解析类对应的属性对象
 		addFields(clazz);
+		//获取所有可读的属性
 		readablePropertyNames = getMethods.keySet().toArray(new String[getMethods.keySet().size()]);
+		//获取所有可写的属性
 		writeablePropertyNames = setMethods.keySet().toArray(new String[setMethods.keySet().size()]);
+		//首先记录所有可读的属性
 		for (String propName : readablePropertyNames) {
 			caseInsensitivePropertyMap.put(propName.toUpperCase(Locale.ENGLISH), propName);
 		}
+		//然后记录所有可读的属性
 		for (String propName : writeablePropertyNames) {
 			caseInsensitivePropertyMap.put(propName.toUpperCase(Locale.ENGLISH), propName);
 		}
@@ -401,74 +411,107 @@ public class Reflector {
 		return !(name.startsWith("$") || "serialVersionUID".equals(name) || "class".equals(name));
 	}
 
-	/*
-	 * This method returns an array containing all methods declared in this class
-	 * and any superclass. We use this method, instead of the simpler
-	 * Class.getMethods(), because we want to look for private methods as well.
-	 *
-	 * @param cls The class
-	 * 
-	 * @return An array containing all methods in this class
+	/* 此处获取给定类的所有方法----->方法包含三种来源
+	 *   1 类本身中的方法
+	 *   2 类实现接口中的方法
+	 *   3 父类对象的方法
+	 * 注意此处没有使用Class.getMethods()而是使用了Class.getDeclaredMethods() 目的是获取类中对应的私有方法
+	 * public Method[] getMethods()返回某个类的所有公用（public）方法包括其继承类的公用方法，当然也包括它所实现接口的方法。
+	 * public Method[] getDeclaredMethods()对象表示的类或接口声明的所有方法，包括公共、保护、默认（包）访问和私有方法，但不包括继承的方法。当然也包括它所实现接口的方法。
 	 */
 	private Method[] getClassMethods(Class<?> cls) {
+		//首先定义存储唯一函数的集合对象
 		Map<String, Method> uniqueMethods = new HashMap<String, Method>();
 		Class<?> currentClass = cls;
+		//循环遍历当前类对应的继承和实现函数
 		while (currentClass != null && currentClass != Object.class) {
+			//首先将本类中的方法添加到唯一集合中
 			addUniqueMethods(uniqueMethods, currentClass.getDeclaredMethods());
-			// we also need to look for interface methods - because the class may be abstract
+			//获取当前类所实现的接口
 			Class<?>[] interfaces = currentClass.getInterfaces();
+			//循环处理所有的接口
 			for (Class<?> anInterface : interfaces) {
+				//将接口中所有的方法添加到唯一集合中
 				addUniqueMethods(uniqueMethods, anInterface.getMethods());
 			}
+			//获取对应的父类----->即需要将父类中的方法添加到唯一集合中
 			currentClass = currentClass.getSuperclass();
 		}
+		//获取唯一集合中所有的方法
 		Collection<Method> methods = uniqueMethods.values();
+		//获取对应的方法数组
 		return methods.toArray(new Method[methods.size()]);
 	}
 
+	/*
+	 * 将提供的所有方法添加到唯一函数集合中
+	 */
 	private void addUniqueMethods(Map<String, Method> uniqueMethods, Method[] methods) {
+		//循环遍历所有需要添加到唯一集合中的方法
 		for (Method currentMethod : methods) {
+			//桥接方法说明--->本质上还是泛型抹除  
+			//https://www.cnblogs.com/zsg88/p/7588929.html
+			//此处需要过滤对应的桥接方法
 			if (!currentMethod.isBridge()) {
+				//获取方法对应的签名字符串
 				String signature = getSignature(currentMethod);
 				// check to see if the method is already known if it is known, then an extended class must have overridden a method
+				//检测对应的签名函数是否已经存储在唯一集合中
 				if (!uniqueMethods.containsKey(signature)) {
+					//检测是否可以访问对应的私有方法类型
 					if (canAccessPrivateMethods()) {
 						try {
+							//设置可以访问对应的方法
 							currentMethod.setAccessible(true);
 						} catch (Exception e) {
-							// Ignored. This is only a final precaution, nothing we can do.
+							
 						}
 					}
+					//将此方法签名和对应的方法添加到唯一集合中
 					uniqueMethods.put(signature, currentMethod);
 				}
 			}
 		}
 	}
 
+	/*
+	 * 获取方法的签名
+	 */
 	private String getSignature(Method method) {
 		StringBuilder sb = new StringBuilder();
+		//首先获取对应的返回值类型
 		Class<?> returnType = method.getReturnType();
+		//检测对应的返回值类型是否为空
 		if (returnType != null) {
 			sb.append(returnType.getName()).append('#');
 		}
+		//拼接函数的名称
 		sb.append(method.getName());
+		//获取所有的参数类型
 		Class<?>[] parameters = method.getParameterTypes();
+		//循环处理所有的参数类型,进行对参数类型的拼接操作处理
 		for (int i = 0; i < parameters.length; i++) {
 			if (i == 0) {
 				sb.append(':');
 			} else {
 				sb.append(',');
 			}
+			//拼接参数的类型
 			sb.append(parameters[i].getName());
 		}
+		//返回拼接后的函数签名对应的字符串
 		return sb.toString();
 	}
 
-	/*
+	/*检测是否具有访问类中私有方法的权限
 	 * https://www.programcreek.com/java-api-examples/index.php?api=java.lang.reflect.ReflectPermission
+	 * https://www.aliyun.com/jiaocheng/774888.html
+	 * http://www.cnblogs.com/yiwangzhibujian/p/6207212.html
+	 * https://blog.csdn.net/xiang_shuo/article/details/80250164
 	 */
 	private static boolean canAccessPrivateMethods() {
 		try {
+			//获取对应的安全管理器处理类对象
 			SecurityManager securityManager = System.getSecurityManager();
 			if (null != securityManager) {
 				securityManager.checkPermission(new ReflectPermission("suppressAccessChecks"));
@@ -480,9 +523,7 @@ public class Reflector {
 	}
 
 	/*
-	 * Gets the name of the class the instance provides information for
-	 *
-	 * @return The class name
+	 * 获取当前解析的类对象
 	 */
 	public Class<?> getType() {
 		return type;
@@ -529,11 +570,7 @@ public class Reflector {
 	}
 
 	/*
-	 * Gets the type for a property setter
-	 *
-	 * @param propertyName - the name of the property
-	 * 
-	 * @return The Class of the propery setter
+	 * 获取设置属性对应的类型
 	 */
 	public Class<?> getSetterType(String propertyName) {
 		Class<?> clazz = setTypes.get(propertyName);
@@ -543,12 +580,8 @@ public class Reflector {
 		return clazz;
 	}
 
-	/*
-	 * Gets the type for a property getter
-	 *
-	 * @param propertyName - the name of the property
-	 * 
-	 * @return The Class of the propery getter
+	/* 
+	 * 获取读取属性对应的类型
 	 */
 	public Class<?> getGetterType(String propertyName) {
 		Class<?> clazz = getTypes.get(propertyName);
@@ -559,45 +592,36 @@ public class Reflector {
 	}
 
 	/*
-	 * Gets an array of the readable properties for an object
-	 *
-	 * @return The array
+	 * 获取所有可以读取的属性集合
 	 */
 	public String[] getGetablePropertyNames() {
 		return readablePropertyNames;
 	}
 
 	/*
-	 * Gets an array of the writeable properties for an object
-	 *
-	 * @return The array
+	 * 获取所有可以写入的属性集合
 	 */
 	public String[] getSetablePropertyNames() {
 		return writeablePropertyNames;
 	}
 
 	/*
-	 * Check to see if a class has a writeable property by name
-	 *
-	 * @param propertyName - the name of the property to check
-	 * 
-	 * @return True if the object has a writeable property by the name
+	 * 通过传入的属性名称来检测是否有对应的可写属性
 	 */
 	public boolean hasSetter(String propertyName) {
 		return setMethods.keySet().contains(propertyName);
 	}
 
 	/*
-	 * Check to see if a class has a readable property by name
-	 *
-	 * @param propertyName - the name of the property to check
-	 * 
-	 * @return True if the object has a readable property by the name
+	 * 通过传入的属性名称来检测是否有对应的可读属性
 	 */
 	public boolean hasGetter(String propertyName) {
 		return getMethods.keySet().contains(propertyName);
 	}
 
+	/*
+	 * 通过传入的属性名称来检测是否有对应的属性存在
+	 */
 	public String findPropertyName(String name) {
 		return caseInsensitivePropertyMap.get(name.toUpperCase(Locale.ENGLISH));
 	}

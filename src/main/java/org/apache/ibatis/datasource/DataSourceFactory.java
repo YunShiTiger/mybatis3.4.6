@@ -1,30 +1,18 @@
-/**
- *    Copyright 2009-2015 the original author or authors.
- *
- *    Licensed under the Apache License, Version 2.0 (the "License");
- *    you may not use this file except in compliance with the License.
- *    You may obtain a copy of the License at
- *
- *       http://www.apache.org/licenses/LICENSE-2.0
- *
- *    Unless required by applicable law or agreed to in writing, software
- *    distributed under the License is distributed on an "AS IS" BASIS,
- *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *    See the License for the specific language governing permissions and
- *    limitations under the License.
- */
 package org.apache.ibatis.datasource;
 
 import java.util.Properties;
 import javax.sql.DataSource;
 
 /**
- * @author Clinton Begin
+ * 数据源工厂处理接口
+ *    主要用于定义获取对应的数据源和配置属性的处理
  */
 public interface DataSourceFactory {
 
-  void setProperties(Properties props);
+	//对外暴露的设置属性的接口方法
+	void setProperties(Properties props);
 
-  DataSource getDataSource();
+	//对外暴露的获取对应数据源的接口方法
+	DataSource getDataSource();
 
 }

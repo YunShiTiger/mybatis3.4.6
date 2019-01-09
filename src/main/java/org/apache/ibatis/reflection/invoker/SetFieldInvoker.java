@@ -4,7 +4,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 
 /**
- * 获取设置属性的执行器处理类
+ * 设置属性值的执行器处理类
  */
 public class SetFieldInvoker implements Invoker {
 	private final Field field;

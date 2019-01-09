@@ -81,6 +81,7 @@ import org.apache.ibatis.type.TypeHandlerRegistry;
  */
 public class Configuration {
 
+	//记录对应的数据库执行环境对象
 	protected Environment environment;
 
 	protected boolean safeRowBoundsEnabled;
@@ -106,10 +107,14 @@ public class Configuration {
 	protected ExecutorType defaultExecutorType = ExecutorType.SIMPLE;
 	protected AutoMappingBehavior autoMappingBehavior = AutoMappingBehavior.PARTIAL;
 	protected AutoMappingUnknownColumnBehavior autoMappingUnknownColumnBehavior = AutoMappingUnknownColumnBehavior.NONE;
-
+	
+	//用于记录所有配置的属性信息
 	protected Properties variables = new Properties();
+	//设置反射工厂处理类对象(开始设置了默认的反射工厂处理类对象)
 	protected ReflectorFactory reflectorFactory = new DefaultReflectorFactory();
+	//设置对应的对象工厂对象
 	protected ObjectFactory objectFactory = new DefaultObjectFactory();
+	//设置对应的包装对象工厂对象
 	protected ObjectWrapperFactory objectWrapperFactory = new DefaultObjectWrapperFactory();
 
 	protected boolean lazyLoadingEnabled = false;
@@ -119,15 +124,14 @@ public class Configuration {
 	/**
 	 * Configuration factory class. Used to create Configuration for loading
 	 * deserialized unread properties.
-	 *
-	 * @see <a href='https://code.google.com/p/mybatis/issues/detail?id=300'>Issue
-	 *      300 (google code)</a>
 	 */
 	protected Class<?> configurationFactory;
 
 	protected final MapperRegistry mapperRegistry = new MapperRegistry(this);
+	//记录配置的插件链对象
 	protected final InterceptorChain interceptorChain = new InterceptorChain();
 	protected final TypeHandlerRegistry typeHandlerRegistry = new TypeHandlerRegistry();
+	//记录配置的别名注册器对象
 	protected final TypeAliasRegistry typeAliasRegistry = new TypeAliasRegistry();
 	protected final LanguageDriverRegistry languageRegistry = new LanguageDriverRegistry();
 
