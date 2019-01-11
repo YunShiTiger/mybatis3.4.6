@@ -77,7 +77,8 @@ import org.apache.ibatis.type.TypeHandler;
 import org.apache.ibatis.type.TypeHandlerRegistry;
 
 /**
- * 
+ * 用于记录配置xml中相关信息的配置信息类对象
+ *    此类可以看做是对应xml文件的映射处理类----->后期的处理都是通过本来中配置的信息进行操作
  */
 public class Configuration {
 
@@ -120,6 +121,7 @@ public class Configuration {
 	protected boolean lazyLoadingEnabled = false;
 	protected ProxyFactory proxyFactory = new JavassistProxyFactory(); // #224 Using internal Javassist instead of OGNL
 
+	//当前运行的数据库环境对应的数据库标识------------>配置的带有当前标识的数据库操作语句具有更高的注册优先权
 	protected String databaseId;
 	/**
 	 * Configuration factory class. Used to create Configuration for loading
@@ -127,9 +129,11 @@ public class Configuration {
 	 */
 	protected Class<?> configurationFactory;
 
+	//进行数据库操作的mapper注册器对象
 	protected final MapperRegistry mapperRegistry = new MapperRegistry(this);
 	//记录配置的插件链对象
 	protected final InterceptorChain interceptorChain = new InterceptorChain();
+	//进行数据转换操作处理的类型处理器注册器对象
 	protected final TypeHandlerRegistry typeHandlerRegistry = new TypeHandlerRegistry();
 	//记录配置的别名注册器对象
 	protected final TypeAliasRegistry typeAliasRegistry = new TypeAliasRegistry();
@@ -162,24 +166,30 @@ public class Configuration {
 	}
 
 	public Configuration() {
+		//注册事物管理器相关的别名
 		typeAliasRegistry.registerAlias("JDBC", JdbcTransactionFactory.class);
 		typeAliasRegistry.registerAlias("MANAGED", ManagedTransactionFactory.class);
 
+		//注册数据源工厂相关的别名
 		typeAliasRegistry.registerAlias("JNDI", JndiDataSourceFactory.class);
 		typeAliasRegistry.registerAlias("POOLED", PooledDataSourceFactory.class);
 		typeAliasRegistry.registerAlias("UNPOOLED", UnpooledDataSourceFactory.class);
 
+		//注册缓存策略相关的别名
 		typeAliasRegistry.registerAlias("PERPETUAL", PerpetualCache.class);
 		typeAliasRegistry.registerAlias("FIFO", FifoCache.class);
 		typeAliasRegistry.registerAlias("LRU", LruCache.class);
 		typeAliasRegistry.registerAlias("SOFT", SoftCache.class);
 		typeAliasRegistry.registerAlias("WEAK", WeakCache.class);
 
+		//
 		typeAliasRegistry.registerAlias("DB_VENDOR", VendorDatabaseIdProvider.class);
 
+		//注册语言处理相关的别名
 		typeAliasRegistry.registerAlias("XML", XMLLanguageDriver.class);
 		typeAliasRegistry.registerAlias("RAW", RawLanguageDriver.class);
 
+		//注册与输出日志相关的别名
 		typeAliasRegistry.registerAlias("SLF4J", Slf4jImpl.class);
 		typeAliasRegistry.registerAlias("COMMONS_LOGGING", JakartaCommonsLoggingImpl.class);
 		typeAliasRegistry.registerAlias("LOG4J", Log4jImpl.class);
@@ -188,9 +198,11 @@ public class Configuration {
 		typeAliasRegistry.registerAlias("STDOUT_LOGGING", StdOutImpl.class);
 		typeAliasRegistry.registerAlias("NO_LOGGING", NoLoggingImpl.class);
 
+		//注册使用代理方式相关的别名
 		typeAliasRegistry.registerAlias("CGLIB", CglibProxyFactory.class);
 		typeAliasRegistry.registerAlias("JAVASSIST", JavassistProxyFactory.class);
 
+		//
 		languageRegistry.setDefaultDriverClass(XMLLanguageDriver.class);
 		languageRegistry.register(RawLanguageDriver.class);
 	}
@@ -532,26 +544,20 @@ public class Configuration {
 		return MetaObject.forObject(object, objectFactory, objectWrapperFactory, reflectorFactory);
 	}
 
-	public ParameterHandler newParameterHandler(MappedStatement mappedStatement, Object parameterObject,
-			BoundSql boundSql) {
-		ParameterHandler parameterHandler = mappedStatement.getLang().createParameterHandler(mappedStatement,
-				parameterObject, boundSql);
+	public ParameterHandler newParameterHandler(MappedStatement mappedStatement, Object parameterObject, BoundSql boundSql) {
+		ParameterHandler parameterHandler = mappedStatement.getLang().createParameterHandler(mappedStatement, parameterObject, boundSql);
 		parameterHandler = (ParameterHandler) interceptorChain.pluginAll(parameterHandler);
 		return parameterHandler;
 	}
 
-	public ResultSetHandler newResultSetHandler(Executor executor, MappedStatement mappedStatement, RowBounds rowBounds,
-			ParameterHandler parameterHandler, ResultHandler resultHandler, BoundSql boundSql) {
-		ResultSetHandler resultSetHandler = new DefaultResultSetHandler(executor, mappedStatement, parameterHandler,
-				resultHandler, boundSql, rowBounds);
+	public ResultSetHandler newResultSetHandler(Executor executor, MappedStatement mappedStatement, RowBounds rowBounds, ParameterHandler parameterHandler, ResultHandler resultHandler, BoundSql boundSql) {
+		ResultSetHandler resultSetHandler = new DefaultResultSetHandler(executor, mappedStatement, parameterHandler, resultHandler, boundSql, rowBounds);
 		resultSetHandler = (ResultSetHandler) interceptorChain.pluginAll(resultSetHandler);
 		return resultSetHandler;
 	}
 
-	public StatementHandler newStatementHandler(Executor executor, MappedStatement mappedStatement,
-			Object parameterObject, RowBounds rowBounds, ResultHandler resultHandler, BoundSql boundSql) {
-		StatementHandler statementHandler = new RoutingStatementHandler(executor, mappedStatement, parameterObject,
-				rowBounds, resultHandler, boundSql);
+	public StatementHandler newStatementHandler(Executor executor, MappedStatement mappedStatement, Object parameterObject, RowBounds rowBounds, ResultHandler resultHandler, BoundSql boundSql) {
+		StatementHandler statementHandler = new RoutingStatementHandler(executor, mappedStatement, parameterObject, rowBounds, resultHandler, boundSql);
 		statementHandler = (StatementHandler) interceptorChain.pluginAll(statementHandler);
 		return statementHandler;
 	}
@@ -812,8 +818,7 @@ public class Configuration {
 				if (value instanceof ResultMap) {
 					ResultMap entryResultMap = (ResultMap) value;
 					if (!entryResultMap.hasNestedResultMaps() && entryResultMap.getDiscriminator() != null) {
-						Collection<String> discriminatedResultMapNames = entryResultMap.getDiscriminator()
-								.getDiscriminatorMap().values();
+						Collection<String> discriminatedResultMapNames = entryResultMap.getDiscriminator().getDiscriminatorMap().values();
 						if (discriminatedResultMapNames.contains(rm.getId())) {
 							entryResultMap.forceNestedResultMaps();
 						}
@@ -886,8 +891,7 @@ public class Configuration {
 				throw new IllegalArgumentException(name + " does not contain value for " + key);
 			}
 			if (value instanceof Ambiguity) {
-				throw new IllegalArgumentException(((Ambiguity) value).getSubject() + " is ambiguous in " + name
-						+ " (try using the full name including the namespace, or rename one of the entries)");
+				throw new IllegalArgumentException(((Ambiguity) value).getSubject() + " is ambiguous in " + name + " (try using the full name including the namespace, or rename one of the entries)");
 			}
 			return value;
 		}

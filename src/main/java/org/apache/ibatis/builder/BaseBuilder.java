@@ -26,8 +26,11 @@ public abstract class BaseBuilder {
 	protected final TypeHandlerRegistry typeHandlerRegistry;
 
 	public BaseBuilder(Configuration configuration) {
+		//记录对应的配置信息类对象
 		this.configuration = configuration;
+		//获取配置信息类对象中配置的别名注册器对象------->主要是根据别名获取对应的类对象
 		this.typeAliasRegistry = this.configuration.getTypeAliasRegistry();
+		//获取配置信息类对象中配置的类型转化器对象
 		this.typeHandlerRegistry = this.configuration.getTypeHandlerRegistry();
 	}
 

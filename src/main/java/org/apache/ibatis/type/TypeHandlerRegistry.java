@@ -38,8 +38,7 @@ import org.apache.ibatis.reflection.Jdk;
  */
 public final class TypeHandlerRegistry {
 
-	private final Map<JdbcType, TypeHandler<?>> JDBC_TYPE_HANDLER_MAP = new EnumMap<JdbcType, TypeHandler<?>>(
-			JdbcType.class);
+	private final Map<JdbcType, TypeHandler<?>> JDBC_TYPE_HANDLER_MAP = new EnumMap<JdbcType, TypeHandler<?>>(JdbcType.class);
 	private final Map<Type, Map<JdbcType, TypeHandler<?>>> TYPE_HANDLER_MAP = new ConcurrentHashMap<Type, Map<JdbcType, TypeHandler<?>>>();
 	private final TypeHandler<Object> UNKNOWN_TYPE_HANDLER = new UnknownTypeHandler(this);
 	private final Map<Class<?>, TypeHandler<?>> ALL_TYPE_HANDLERS_MAP = new HashMap<Class<?>, TypeHandler<?>>();
@@ -370,29 +369,34 @@ public final class TypeHandlerRegistry {
 		ALL_TYPE_HANDLERS_MAP.put(handler.getClass(), handler);
 	}
 
-	//
-	// REGISTER CLASS
-	//
-
-	// Only handler type
-
+	/*
+	 * 只根据给定的类型转化器来进行注册操作处理
+	 */
 	public void register(Class<?> typeHandlerClass) {
+		//用于标识是否找到对应的关联关系
 		boolean mappedTypeFound = false;
+		//首先获取类上设置的MappedTypes注解
 		MappedTypes mappedTypes = typeHandlerClass.getAnnotation(MappedTypes.class);
+		//检测是否配置了MappedTypes注解
 		if (mappedTypes != null) {
+			//循环遍历配置的转换类型
 			for (Class<?> javaTypeClass : mappedTypes.value()) {
+				//将对应的类型与对应的类型转换处理器进行注册关联处理
 				register(javaTypeClass, typeHandlerClass);
+				//设置找到对应的关联关系
 				mappedTypeFound = true;
 			}
 		}
+		//检测是否找到对应的关联关系
 		if (!mappedTypeFound) {
+			//在没有找到对应的匹配类型时设置一个
 			register(getInstance(null, typeHandlerClass));
 		}
 	}
 
-	// java type + handler type
-
+	//根据提供的类型和类型转化器对应的加载位置来进行注册处理
 	public void register(String javaTypeClassName, String typeHandlerClassName) throws ClassNotFoundException {
+		//首先加载对应的类型和类型转化器对应的类,然后进行注册操作处理
 		register(Resources.classForName(javaTypeClassName), Resources.classForName(typeHandlerClassName));
 	}
 
@@ -428,22 +432,23 @@ public final class TypeHandlerRegistry {
 		}
 	}
 
-	// scan
-
+	//以包扫描的方式进行类型转换注册处理
 	public void register(String packageName) {
+		//创建对应的资源扫描处理对象
 		ResolverUtil<Class<?>> resolverUtil = new ResolverUtil<Class<?>>();
+		//设置在指定包下进行扫描的目的是继承自TypeHandler的类
 		resolverUtil.find(new ResolverUtil.IsA(TypeHandler.class), packageName);
+		//获取所有扫描到的指定资源类
 		Set<Class<? extends Class<?>>> handlerSet = resolverUtil.getClasses();
+		//循环遍历所有的资源处理类进行注册操作处理
 		for (Class<?> type : handlerSet) {
-			// Ignore inner classes and interfaces (including package-info.java) and
-			// abstract classes
+			//过滤 内名内部类 接口 抽象类
 			if (!type.isAnonymousClass() && !type.isInterface() && !Modifier.isAbstract(type.getModifiers())) {
+				//符合条件的类进行注册处理
 				register(type);
 			}
 		}
 	}
-
-	// get information
 
 	/**
 	 * @since 3.2.2

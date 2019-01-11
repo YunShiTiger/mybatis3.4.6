@@ -41,7 +41,7 @@ public class XMLConfigBuilder extends BaseBuilder {
 	private boolean parsed;
 	//用于记录对应的解析配置xml文件内容的搜索器对象
 	private final XPathParser parser;
-	//
+	//设置外部设定的全局环境变量值
 	private String environment;
 	//设置默认的反射对象生成工厂对象
 	private final ReflectorFactory localReflectorFactory = new DefaultReflectorFactory();
@@ -75,7 +75,7 @@ public class XMLConfigBuilder extends BaseBuilder {
 
 	//构造XMLConfigBuilder对象必须走的构造函数,用于初始化相关的参数对象
 	private XMLConfigBuilder(XPathParser parser, String environment, Properties props) {
-		//此处非常的重要,它初始化了对应的配置信息对象
+		//此处非常的重要,它初始化了对应的配置信息对象-------------------------------------------->这个地方说明了 在解析对应的xml文件之前需要新初始化好对应的配置信息对象(此处是唯一创建配置信息类对象的地方)
 		super(new Configuration());
 		ErrorContext.instance().resource("SQL Mapper Configuration");
 		//设置对应的全局配置信息
@@ -141,13 +141,13 @@ public class XMLConfigBuilder extends BaseBuilder {
 			//解析配置文件中environments节点配置的数据库执行环境信息
 			environmentsElement(root.evalNode("environments"));
 			
-			//解析配置文件中databaseIdProvider节点配置的
+			//解析配置文件中databaseIdProvider节点配置的当前数据库对应的运行环境标识
 			databaseIdProviderElement(root.evalNode("databaseIdProvider"));
 			
 			//解析配置文件中typeHandlers节点配置的类型转化器
 			typeHandlerElement(root.evalNode("typeHandlers"));
 			
-			//解析配置文件中mappers节点配置的
+			//解析配置文件中mappers节点配置的数据库操作映射
 			mapperElement(root.evalNode("mappers"));
 		} catch (Exception e) {
 			//在解析对应的xml配置文件过程中出现了错误,抛出对应的异常信息
@@ -475,33 +475,41 @@ public class XMLConfigBuilder extends BaseBuilder {
 
 	/*
 	 * 解析配置文件中databaseIdProvider节点配置的
+	 * mybatis可以根据不同的数据库厂商执行不同的语句,这种多厂商的支持是基于映射语句中的databaseId属性.mybatis会加载不带databaseId属性和带有匹配当前数据库databaseId属性的所有语句.如果同时找到带有databaseId和不带databaseId的相同语句,则后者会被舍弃.
 	 */
 	private void databaseIdProviderElement(XNode context) throws Exception {
 		DatabaseIdProvider databaseIdProvider = null;
 		//检测对应的节点是否配置
 		if (context != null) {
+			//获取配置的进行支持多厂商的适配的处理类类型
 			String type = context.getStringAttribute("type");
-			// awful patch to keep backward compatibility
+			//从这里可以看出,指定为VENDOR,也会被当作DB_VENDOR
 			if ("VENDOR".equals(type)) {
 				type = "DB_VENDOR";
 			}
+			//获取配置的对应属性
 			Properties properties = context.getChildrenAsProperties();
+			//实例化别名为type的DatabaseIdProvider(内置的为DB_VENDOR)
 			databaseIdProvider = (DatabaseIdProvider) resolveClass(type).newInstance();
+			//给对应的DatabaseIdProvider设置对应的属性
 			databaseIdProvider.setProperties(properties);
 		}
 		//获取当前的执行环境对象
 		Environment environment = configuration.getEnvironment();
-		//检测指定环境和
+		//检测数据库执行环境和DatabaseIdProvider对象不为空------------>即配置了databaseIdProvider节点
 		if (environment != null && databaseIdProvider != null) {
-			//
+			//获取当前数据库执行环境对应的标识------->带有当前标识的数据库语句具有注册优先权
 			String databaseId = databaseIdProvider.getDatabaseId(environment.getDataSource());
-			//
+			//将对应的标识设置到配置信息对象上
 			configuration.setDatabaseId(databaseId);
 		}
 	}
 
 	/*
 	 * 解析配置文件中typeHandlers节点配置的类型处理器
+	 * 通过分析代码可以发现有两种方式来进行注册类型处理器对象
+	 *   1 通过配置package来进行包扫描进行注册
+	 *   2直接配置typeHandler来进行注册
 	 */
 	private void typeHandlerElement(XNode parent) throws Exception {
 		//检测对应的节点是否配置
@@ -536,30 +544,50 @@ public class XMLConfigBuilder extends BaseBuilder {
 	}
 
 	/*
-	 * 
+	 * 解析配置文件中mappers节点配置的数据库操作映射
+	 * 通过分析代码发现有两大类进行设置数据库操作的映射方式
+	 * 1 通过配置包名来进行扫描对应包下的类进行注册对应sql语句的处理 (以类的方式进行配置)
+	 * 2通过配置相关数据来进行注册对应sql语句的处理 (以xml文件的形式进行配置)
+	 *    a 配置resource
+	 *    b 配置url
+	 *    c 配置class
 	 */
 	private void mapperElement(XNode parent) throws Exception {
+		//检测是否配置了对应的mappers节点
 		if (parent != null) {
+			//循环遍历所有对应的一级子节点
 			for (XNode child : parent.getChildren()) {
 				if ("package".equals(child.getName())) {
+					//获取对应的配置的包名
 					String mapperPackage = child.getStringAttribute("name");
+					//根据提供的包名进行注册Mapper
 					configuration.addMappers(mapperPackage);
 				} else {
+					//获取配置的相关属性
 					String resource = child.getStringAttribute("resource");
 					String url = child.getStringAttribute("url");
 					String mapperClass = child.getStringAttribute("class");
+					//根据配置属性的不同进行不同方式的注册操作处理
 					if (resource != null && url == null && mapperClass == null) {
 						ErrorContext.instance().resource(resource);
+						//获取对应的mapper资源流对象
 						InputStream inputStream = Resources.getResourceAsStream(resource);
+						//创建对应的xml方式的mapper构建器对象
 						XMLMapperBuilder mapperParser = new XMLMapperBuilder(inputStream, configuration, resource, configuration.getSqlFragments());
+						//进行解析操作处理
 						mapperParser.parse();
 					} else if (resource == null && url != null && mapperClass == null) {
 						ErrorContext.instance().resource(url);
+						//获取对应的mapper资源流对象
 						InputStream inputStream = Resources.getUrlAsStream(url);
+						//创建对应的xml方式的mapper构建器对象
 						XMLMapperBuilder mapperParser = new XMLMapperBuilder(inputStream, configuration, url, configuration.getSqlFragments());
+						//进行解析操作处理
 						mapperParser.parse();
 					} else if (resource == null && url == null && mapperClass != null) {
+						//加载对应的类对象
 						Class<?> mapperInterface = Resources.classForName(mapperClass);
+						//以类的方式进行注册
 						configuration.addMapper(mapperInterface);
 					} else {
 						throw new BuilderException("A mapper element may only specify a url, resource or class, but not more than one.");
