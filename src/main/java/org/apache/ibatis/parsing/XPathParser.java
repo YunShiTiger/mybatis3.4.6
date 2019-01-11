@@ -29,8 +29,12 @@ import org.xml.sax.SAXParseException;
  */
 public class XPathParser {
 
+	//对应的需要解析的xml文档对象
 	private final Document document;
+	//https://blog.csdn.net/qiujiwuhen00/article/details/46120217
+	//对应的进行xml文档解析的解析器对象
 	private XPath xpath;
+	//
 	private EntityResolver entityResolver;
 	
 	private boolean validation;
@@ -136,16 +140,25 @@ public class XPathParser {
 		this.variables = variables;
 	}
 
+	/*
+	 * 根据给定的表达式获取对应的节点中String数据
+	 */
 	public String evalString(String expression) {
 		return evalString(document, expression);
 	}
 
 	public String evalString(Object root, String expression) {
+		//获取对应表达式节点中的字符串数据
 		String result = (String) evaluate(expression, root, XPathConstants.STRING);
+		//对获取到的字符串数据进行解析操作处理--------------->即有些字符串数据可以是配置类型的数据${***}  因此需要获取对应的真实对应的数据(即对应的数据在属性集合中应该有对应的配置)
 		result = PropertyParser.parse(result, variables);
+		//返回解析后的字符串对象
 		return result;
 	}
 
+	/*
+	 * 根据给定的表达式获取对应的节点中Boolean数据
+	 */
 	public Boolean evalBoolean(String expression) {
 		return evalBoolean(document, expression);
 	}
@@ -154,6 +167,9 @@ public class XPathParser {
 		return (Boolean) evaluate(expression, root, XPathConstants.BOOLEAN);
 	}
 
+	/*
+	 * 根据给定的表达式获取对应的节点中Short数据
+	 */
 	public Short evalShort(String expression) {
 		return evalShort(document, expression);
 	}
@@ -162,6 +178,9 @@ public class XPathParser {
 		return Short.valueOf(evalString(root, expression));
 	}
 
+	/*
+	 * 根据给定的表达式获取对应的节点中Integer数据
+	 */
 	public Integer evalInteger(String expression) {
 		return evalInteger(document, expression);
 	}
@@ -170,6 +189,9 @@ public class XPathParser {
 		return Integer.valueOf(evalString(root, expression));
 	}
 
+	/*
+	 * 根据给定的表达式获取对应的节点中Long数据
+	 */
 	public Long evalLong(String expression) {
 		return evalLong(document, expression);
 	}
@@ -178,6 +200,9 @@ public class XPathParser {
 		return Long.valueOf(evalString(root, expression));
 	}
 
+	/*
+	 * 根据给定的表达式获取对应的节点中Float数据
+	 */
 	public Float evalFloat(String expression) {
 		return evalFloat(document, expression);
 	}
@@ -186,6 +211,9 @@ public class XPathParser {
 		return Float.valueOf(evalString(root, expression));
 	}
 
+	/*
+	 * 根据给定的表达式获取对应的节点中Double数据
+	 */
 	public Double evalDouble(String expression) {
 		return evalDouble(document, expression);
 	}
@@ -194,16 +222,25 @@ public class XPathParser {
 		return (Double) evaluate(expression, root, XPathConstants.NUMBER);
 	}
 
+	/*
+	 * 根据给定的表达式获取对应的节点集合
+	 */
 	public List<XNode> evalNodes(String expression) {
 		return evalNodes(document, expression);
 	}
 
+	/*
+	 * 根据给定的表达式和根节点获取对应的节点集合
+	 */
 	public List<XNode> evalNodes(Object root, String expression) {
 		List<XNode> xnodes = new ArrayList<XNode>();
+		//解析获取对应的节点集合
 		NodeList nodes = (NodeList) evaluate(expression, root, XPathConstants.NODESET);
+		//循环操作处理,将原始的节点转换成对应的封装节点
 		for (int i = 0; i < nodes.getLength(); i++) {
 			xnodes.add(new XNode(this, nodes.item(i), variables));
 		}
+		//返回封装后的节点集合
 		return xnodes;
 	}
 
@@ -230,11 +267,18 @@ public class XPathParser {
 	}
 
 	/*
-	 * 根据提供的表达式获取原生对应的节点
+	 * 根据提供的表达式和查询类型返回对应的查找到的内容 
+	 * XPath 1.0只有四种基本的数据类型： 
+	 * number（数值型）                   XPathConstants.NUMBER 
+	 * node-set（节点型）           XPathConstants.NODESET XPathConstants.NODE
+	 * boolean（布尔型）               XPathConstants.BOOLEAN
+	 * string（字符串型）             XPathConstants.STRING
+	 * 
+	 * XPathConstants.NODE并没有匹配的XPath类型，它主要适用于当XPath表达式的结果有且只有一个节点。如果XPath表达式返回了多个节点，却指定类型为XPathConstants.NODE，则evaluate()方法将按照文档顺序返回第一个节点。如果XPath表达式的结果为一个空集，却指定类型为XPathConstants.NODE，则evaluate( )方法将返回null
 	 */
 	private Object evaluate(String expression, Object root, QName returnType) {
 		try {
-			//通过xpath来获取指定表达式对应的原始节点
+			//通过xpath来获取指定表达式对应的内容
 			return xpath.evaluate(expression, root, returnType);
 		} catch (Exception e) {
 			throw new BuilderException("Error evaluating XPath.  Cause: " + e, e);
@@ -256,6 +300,7 @@ public class XPathParser {
 			DocumentBuilder builder = factory.newDocumentBuilder();
 			builder.setEntityResolver(entityResolver);
 			builder.setErrorHandler(new ErrorHandler() {
+				
 				@Override
 				public void error(SAXParseException exception) throws SAXException {
 					throw exception;
@@ -268,6 +313,7 @@ public class XPathParser {
 
 				@Override
 				public void warning(SAXParseException exception) throws SAXException {
+					
 				}
 			});
 			return builder.parse(inputSource);

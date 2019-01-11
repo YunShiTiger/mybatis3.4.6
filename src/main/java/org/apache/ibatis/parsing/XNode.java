@@ -42,25 +42,41 @@ public class XNode {
 		return new XNode(xpathParser, node, variables);
 	}
 
+	/*
+	 * 获取节点对应的父节点
+	 */
 	public XNode getParent() {
+		//获取原生节点对应的父原生节点
 		Node parent = node.getParentNode();
+		//检测对应的父节点是否存在且为元素节点
 		if (parent == null || !(parent instanceof Element)) {
 			return null;
 		} else {
+			//创建对应的父节点的封装处理
 			return new XNode(xpathParser, parent, variables);
 		}
 	}
 
+	/*
+	 * 获取当前节点对应的路径
+	 */
 	public String getPath() {
 		StringBuilder builder = new StringBuilder();
+		//记录对应当前遍历的节点
 		Node current = node;
+		//循环装配对应的路径
 		while (current != null && current instanceof Element) {
+			//检测当前是否为本节点
 			if (current != node) {
+				//非本节点插入/分割符
 				builder.insert(0, "/");
 			}
+			//插入对应的节点名称
 			builder.insert(0, current.getNodeName());
+			//获取对应的父节点
 			current = current.getParentNode();
 		}
+		//获取当前节点对应的路径
 		return builder.toString();
 	}
 
