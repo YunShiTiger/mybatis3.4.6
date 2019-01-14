@@ -33,13 +33,17 @@ import org.apache.ibatis.type.JdbcType;
 import org.apache.ibatis.type.TypeHandler;
 
 /**
- * 
+ * 基于xml配置方式mapper解析构建器处理类
  */
 public class XMLMapperBuilder extends BaseBuilder {
 
+	//记录对应的xml节点搜索对象
 	private final XPathParser parser;
+	//用于记录对应的解析辅助器对象-------------->注意此处的辅助对象类型和基于注解的辅助类型是一致的
 	private final MapperBuilderAssistant builderAssistant;
+	//用于记录当前存储的sql片段
 	private final Map<String, XNode> sqlFragments;
+	//
 	private final String resource;
 
 	@Deprecated
@@ -64,21 +68,31 @@ public class XMLMapperBuilder extends BaseBuilder {
 
 	private XMLMapperBuilder(XPathParser parser, Configuration configuration, String resource, Map<String, XNode> sqlFragments) {
 		super(configuration);
+		//创建对应的解析辅助对象
 		this.builderAssistant = new MapperBuilderAssistant(configuration, resource);
 		this.parser = parser;
 		this.sqlFragments = sqlFragments;
 		this.resource = resource;
 	}
 
+	/*
+	 * 触发解析对应的xml的处理方法
+	 */
 	public void parse() {
+		//首先检测对应的资源是否已经进行过加载解析处理
 		if (!configuration.isResourceLoaded(resource)) {
+			//
 			configurationElement(parser.evalNode("/mapper"));
+			//解析完成,将对应的资源添加到资源加载解析完成集合中
 			configuration.addLoadedResource(resource);
+			//
 			bindMapperForNamespace();
 		}
-
+		//
 		parsePendingResultMaps();
+		//
 		parsePendingCacheRefs();
+		//
 		parsePendingStatements();
 	}
 

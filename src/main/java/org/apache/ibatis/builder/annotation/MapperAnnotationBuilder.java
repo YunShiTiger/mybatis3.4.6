@@ -262,27 +262,35 @@ public class MapperAnnotationBuilder {
 	 * 真正进行mapper中方法的解析操作处理
 	 */
 	void parseStatement(Method method) {
-		//
+		//获取本方法对应的参数类型
 		Class<?> parameterTypeClass = getParameterType(method);
-		//
+		//获取处理本方法sql语句对应的语句操作驱动对象
 		LanguageDriver languageDriver = getLanguageDriver(method);
-		//
+		//根据参数类型和语句驱动对象创建对应的SqlSource对象(这个相当于最原始的sql语句)
 		SqlSource sqlSource = getSqlSourceFromAnnotations(method, parameterTypeClass, languageDriver);
+		//检测对应方法是有对应的SqlSource对象
 		if (sqlSource != null) {
+			//获取方法上设置的配置参数注解对象
 			Options options = method.getAnnotation(Options.class);
+			//拼接本方法对应的id标识   全限定名称+方法名称
 			final String mappedStatementId = type.getName() + "." + method.getName();
 			Integer fetchSize = null;
 			Integer timeout = null;
 			StatementType statementType = StatementType.PREPARED;
 			ResultSetType resultSetType = ResultSetType.FORWARD_ONLY;
+			//根据方法获取对应的sql命令类型
 			SqlCommandType sqlCommandType = getSqlCommandType(method);
+			//检测对应的命令类型是否是查询类型的sql语句
 			boolean isSelect = sqlCommandType == SqlCommandType.SELECT;
+			//记录是否进行刷新缓存的标识
 			boolean flushCache = !isSelect;
+			//记录是否使用缓存的标识
 			boolean useCache = isSelect;
 
 			KeyGenerator keyGenerator;
 			String keyProperty = "id";
 			String keyColumn = null;
+			//
 			if (SqlCommandType.INSERT.equals(sqlCommandType) || SqlCommandType.UPDATE.equals(sqlCommandType)) {
 				//first check for SelectKey annotation - that overrides everything else
 				SelectKey selectKey = method.getAnnotation(SelectKey.class);
@@ -329,6 +337,7 @@ public class MapperAnnotationBuilder {
 				resultMapId = parseResultMap(method);
 			}
 
+			//通过辅助器对象将解析的mapper方法注册到配置信息对象中
 			assistant.addMappedStatement(mappedStatementId, sqlSource, statementType, sqlCommandType, fetchSize,
 					timeout,
 					// ParameterMapID
@@ -411,12 +420,19 @@ public class MapperAnnotationBuilder {
 		return null;
 	}
 
+	/*
+	 * 解析并获取进行sql语句处理的语句操作驱动对象
+	 */
 	private LanguageDriver getLanguageDriver(Method method) {
+		//获取方法上是否配置Lang注解
 		Lang lang = method.getAnnotation(Lang.class);
 		Class<?> langClass = null;
+		//检测是否配置对应的注解
 		if (lang != null) {
+			//获取对应的驱动对象类型
 			langClass = lang.value();
 		}
+		//根据配置的类型获取对应的语句操作的驱动对象
 		return assistant.getLanguageDriver(langClass);
 	}
 
@@ -431,16 +447,19 @@ public class MapperAnnotationBuilder {
 		Class<?>[] parameterTypes = method.getParameterTypes();
 		//循环遍历所有的参数类型
 		for (Class<?> currentParameterType : parameterTypes) {
-			//过滤参数类型继承子RowBounds或者ResultHandler类型----------------->即
+			//过滤参数类型继承子RowBounds或者ResultHandler类型----------------->即对此类的参数进行过滤处理
 			if (!RowBounds.class.isAssignableFrom(currentParameterType) && !ResultHandler.class.isAssignableFrom(currentParameterType)) {
+				//检测是否配置过了一个参数类型
 				if (parameterType == null) {
+					//出现首次合法类型的参数进行记录
 					parameterType = currentParameterType;
 				} else {
-					// issue #135
+					//出现多个参数就直接使用对应的ParamMap
 					parameterType = ParamMap.class;
 				}
 			}
 		}
+		//返回对应的方法参数类型
 		return parameterType;
 	}
 

@@ -124,8 +124,7 @@ public class Configuration {
 	//当前运行的数据库环境对应的数据库标识------------>配置的带有当前标识的数据库操作语句具有更高的注册优先权
 	protected String databaseId;
 	/**
-	 * Configuration factory class. Used to create Configuration for loading
-	 * deserialized unread properties.
+	 * Configuration factory class. Used to create Configuration for loading deserialized unread properties.
 	 */
 	protected Class<?> configurationFactory;
 
@@ -137,29 +136,35 @@ public class Configuration {
 	protected final TypeHandlerRegistry typeHandlerRegistry = new TypeHandlerRegistry();
 	//记录配置的别名注册器对象
 	protected final TypeAliasRegistry typeAliasRegistry = new TypeAliasRegistry();
+	//用于记录所有注册的sql语句处理驱动对象的集合
 	protected final LanguageDriverRegistry languageRegistry = new LanguageDriverRegistry();
-
+	//用于记录所有mapper中注册的触发sql语句的方法集合
 	protected final Map<String, MappedStatement> mappedStatements = new StrictMap<MappedStatement>("Mapped Statements collection");
 	//用于记录对应mapper使用的缓存对象信息的集合
 	protected final Map<String, Cache> caches = new StrictMap<Cache>("Caches collection");
+	//
 	protected final Map<String, ResultMap> resultMaps = new StrictMap<ResultMap>("Result Maps collection");
+	//
 	protected final Map<String, ParameterMap> parameterMaps = new StrictMap<ParameterMap>("Parameter Maps collection");
+	//
 	protected final Map<String, KeyGenerator> keyGenerators = new StrictMap<KeyGenerator>("Key Generators collection");
 
 	//用于记录已经完成加载的资源配置对象对应的集合
 	protected final Set<String> loadedResources = new HashSet<String>();
+	//
 	protected final Map<String, XNode> sqlFragments = new StrictMap<XNode>("XML fragments parsed from previous mappers");
 
+	//
 	protected final Collection<XMLStatementBuilder> incompleteStatements = new LinkedList<XMLStatementBuilder>();
+	//
 	protected final Collection<CacheRefResolver> incompleteCacheRefs = new LinkedList<CacheRefResolver>();
+	//
 	protected final Collection<ResultMapResolver> incompleteResultMaps = new LinkedList<ResultMapResolver>();
 	//用于记录解析对应方法处理问题时,未能完成解析操作的处理方法
 	protected final Collection<MethodResolver> incompleteMethods = new LinkedList<MethodResolver>();
 
 	/*
-	 * A map holds cache-ref relationship. The key is the namespace that references
-	 * a cache bound to another namespace and the value is the namespace which the
-	 * actual cache is bound to.
+	 * A map holds cache-ref relationship. The key is the namespace that references a cache bound to another namespace and the value is the namespace which the actual cache is bound to.
 	 */
 	protected final Map<String, String> cacheRefMap = new HashMap<String, String>();
 

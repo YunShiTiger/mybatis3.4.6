@@ -341,12 +341,19 @@ public class MapperBuilderAssistant extends BaseBuilder {
 		return buildResultMapping(resultType, property, column, javaType, jdbcType, nestedSelect, nestedResultMap, notNullColumn, columnPrefix, typeHandler, flags, null, null, configuration.isLazyLoadingEnabled());
 	}
 
+	/*
+	 * 根据驱动类型获取对应的语言操作驱动对象
+	 */
 	public LanguageDriver getLanguageDriver(Class<?> langClass) {
+		//根据传入的类型来获取对应的驱动对象类型
 		if (langClass != null) {
+			//将对应的类型注册到语言操作驱动对象集合中
 			configuration.getLanguageRegistry().register(langClass);
 		} else {
+			//获取系统默认配置的语言操作驱动对象
 			langClass = configuration.getLanguageRegistry().getDefaultDriverClass();
 		}
+		//根据驱动类型获取对应的语言操作驱动对象
 		return configuration.getLanguageRegistry().getDriver(langClass);
 	}
 
