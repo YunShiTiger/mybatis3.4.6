@@ -140,17 +140,20 @@ public class Configuration {
 	protected final LanguageDriverRegistry languageRegistry = new LanguageDriverRegistry();
 
 	protected final Map<String, MappedStatement> mappedStatements = new StrictMap<MappedStatement>("Mapped Statements collection");
+	//用于记录对应mapper使用的缓存对象信息的集合
 	protected final Map<String, Cache> caches = new StrictMap<Cache>("Caches collection");
 	protected final Map<String, ResultMap> resultMaps = new StrictMap<ResultMap>("Result Maps collection");
 	protected final Map<String, ParameterMap> parameterMaps = new StrictMap<ParameterMap>("Parameter Maps collection");
 	protected final Map<String, KeyGenerator> keyGenerators = new StrictMap<KeyGenerator>("Key Generators collection");
 
+	//用于记录已经完成加载的资源配置对象对应的集合
 	protected final Set<String> loadedResources = new HashSet<String>();
 	protected final Map<String, XNode> sqlFragments = new StrictMap<XNode>("XML fragments parsed from previous mappers");
 
 	protected final Collection<XMLStatementBuilder> incompleteStatements = new LinkedList<XMLStatementBuilder>();
 	protected final Collection<CacheRefResolver> incompleteCacheRefs = new LinkedList<CacheRefResolver>();
 	protected final Collection<ResultMapResolver> incompleteResultMaps = new LinkedList<ResultMapResolver>();
+	//用于记录解析对应方法处理问题时,未能完成解析操作的处理方法
 	protected final Collection<MethodResolver> incompleteMethods = new LinkedList<MethodResolver>();
 
 	/*

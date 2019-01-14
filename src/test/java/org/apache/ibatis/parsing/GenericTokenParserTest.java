@@ -8,9 +8,13 @@ import org.junit.Test;
 import java.util.HashMap;
 import java.util.Map;
 
+/*
+ * 对统一解析器对象的测试用例
+ */
 public class GenericTokenParserTest {
 
 	public static class VariableTokenHandler implements TokenHandler {
+		
 		private Map<String, String> variables = new HashMap<String, String>();
 
 		public VariableTokenHandler(Map<String, String> variables) {
@@ -62,8 +66,7 @@ public class GenericTokenParserTest {
 
 	@Test
 	public void shallNotInterpolateSkippedVaiables() {
-		GenericTokenParser parser = new GenericTokenParser("${", "}",
-				new VariableTokenHandler(new HashMap<String, String>()));
+		GenericTokenParser parser = new GenericTokenParser("${", "}",new VariableTokenHandler(new HashMap<String, String>()));
 
 		assertEquals("${skipped} variable", parser.parse("\\${skipped} variable"));
 		assertEquals("This is a ${skipped} variable", parser.parse("This is a \\${skipped} variable"));

@@ -18,7 +18,7 @@ public class PropertyParser {
 
 	//默认不取默认值
 	private static final String ENABLE_DEFAULT_VALUE = "false";
-	//默认的分隔符是:
+	//默认的分隔符是:----------->即存在这个分割符的后面的内容就是对应的默认值的取值内容
 	private static final String DEFAULT_VALUE_SEPARATOR = ":";
 
 	private PropertyParser() {
@@ -32,6 +32,7 @@ public class PropertyParser {
 	public static String parse(String string, Properties variables) {
 		//定义进行变量转换操作处理的处理器对象
 		VariableTokenHandler handler = new VariableTokenHandler(variables);
+		//创建对应的解析对应标识的解析器对象
 		GenericTokenParser parser = new GenericTokenParser("${", "}", handler);
 		//进行变量解析操作处理
 		return parser.parse(string);
@@ -44,37 +45,53 @@ public class PropertyParser {
 		
 		//记录对应的属性集合
 		private final Properties variables;
-		//
+		//用于记录是否开启默认值功能标识
 		private final boolean enableDefaultValue;
+		//用于记录对应的默认值取值分割符
 		private final String defaultValueSeparator;
 
 		private VariableTokenHandler(Properties variables) {
 			this.variables = variables;
+			//获取是否开启默认值功能标识
 			this.enableDefaultValue = Boolean.parseBoolean(getPropertyValue(KEY_ENABLE_DEFAULT_VALUE, ENABLE_DEFAULT_VALUE));
+			//获取是否配置对应的分隔符标识
 			this.defaultValueSeparator = getPropertyValue(KEY_DEFAULT_VALUE_SEPARATOR, DEFAULT_VALUE_SEPARATOR);
 		}
 
+		//进行带有默认值方式的获取属性值
 		private String getPropertyValue(String key, String defaultValue) {
 			return (variables == null) ? defaultValue : variables.getProperty(key, defaultValue);
 		}
 
+		/*
+		 * 通过对代码分析
+		 */
 		@Override
 		public String handleToken(String content) {
 			//检测传入的属性集合对象是否存在
 			if (variables != null) {
 				String key = content;
+				//首先检测是否开启了默认值功能
 				if (enableDefaultValue) {
+					//获取对应的默认值分隔符所在位置
 					final int separatorIndex = content.indexOf(defaultValueSeparator);
+					//用于记录默认值的字符串对象
 					String defaultValue = null;
+					//检测是否找到对应的默认分隔符标识
 					if (separatorIndex >= 0) {
+						//截取真实的键字符串
 						key = content.substring(0, separatorIndex);
+						//截取设置的默认值
 						defaultValue = content.substring(separatorIndex + defaultValueSeparator.length());
 					}
+					//如果配置了默认值,以默认值方式获取对应的属性值
 					if (defaultValue != null) {
 						return variables.getProperty(key, defaultValue);
 					}
 				}
+				//默认开始默认值值功能,或者没有配置默认值方式,直接根据对应的键获取对应的属性值
 				if (variables.containsKey(key)) {
+					//此处根据对应的键获取对应的属性------------------->这个地方需要注意  有可能不存在对应的属性值
 					return variables.getProperty(key);
 				}
 			}

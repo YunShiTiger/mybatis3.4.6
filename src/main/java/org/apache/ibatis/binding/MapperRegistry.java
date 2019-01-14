@@ -67,8 +67,11 @@ public class MapperRegistry {
 				// It's important that the type is added before the parser is run
 				// otherwise the binding may automatically be attempted by the
 				// mapper parser. If the type is already known, it won't try.
+				//创建对应的基于注解方式的mapper解析构建器对象
 				MapperAnnotationBuilder parser = new MapperAnnotationBuilder(config, type);
+				//进行解析基于注解的mapper----------------->此处在解析对应mapper的使用缓存对象时可能会出现抛出异常,即整个mapper需要延迟进行解析操作处理
 				parser.parse();
+				//顺利解析完成,设置对应的完成标识
 				loadCompleted = true;
 			} finally {
 				//检测是否完成对mapper文件的解析,根据标识来确定是否进行移除操作处理

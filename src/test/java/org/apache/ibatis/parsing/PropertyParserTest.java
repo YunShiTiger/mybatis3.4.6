@@ -14,11 +14,15 @@ public class PropertyParserTest {
 	public void replaceToVariableValue() {
 		//创建并配置属性集合对象
 		Properties props = new Properties();
+		//设置开启默认值功能,同时使用默认的默认值分割符的形式
 		props.setProperty(PropertyParser.KEY_ENABLE_DEFAULT_VALUE, "true");
+		//设置进行检测的属性信息
 		props.setProperty("key", "value");
 		props.setProperty("tableName", "members");
 		props.setProperty("orderColumn", "member_id");
 		props.setProperty("a:b", "c");
+		
+		//测试获取对应的值
 		Assertions.assertThat(PropertyParser.parse("${key}", props)).isEqualTo("value");
 		Assertions.assertThat(PropertyParser.parse("${key:aaaa}", props)).isEqualTo("value");
 		Assertions.assertThat(PropertyParser.parse("SELECT * FROM ${tableName:users} ORDER BY ${orderColumn:id}", props)).isEqualTo("SELECT * FROM members ORDER BY member_id");
@@ -26,9 +30,11 @@ public class PropertyParserTest {
 		Assertions.assertThat(PropertyParser.parse("${a:b}", props)).isEqualTo("c");
 		props.remove(PropertyParser.KEY_ENABLE_DEFAULT_VALUE);
 		Assertions.assertThat(PropertyParser.parse("${a:b}", props)).isEqualTo("c");
-
 	}
 
+	/*
+	 * 测试默认进行查找到对应属性的值的测试用例
+	 */
 	@Test
 	public void notReplace() {
 		Properties props = new Properties();
@@ -41,9 +47,11 @@ public class PropertyParserTest {
 
 		props.remove(PropertyParser.KEY_ENABLE_DEFAULT_VALUE);
 		Assertions.assertThat(PropertyParser.parse("${a:b}", props)).isEqualTo("${a:b}");
-
 	}
 
+	/*
+	 * 测试使用默认值的测试用例
+	 */
 	@Test
 	public void applyDefaultValue() {
 		Properties props = new Properties();
@@ -55,6 +63,9 @@ public class PropertyParserTest {
 		Assertions.assertThat(PropertyParser.parse("${key::}", props)).isEqualTo(":");
 	}
 
+	/*
+	 * 测试自定义分隔符的测试用例
+	 */
 	@Test
 	public void applyCustomSeparator() {
 		Properties props = new Properties();
