@@ -140,22 +140,26 @@ public class XMLMapperBuilder extends BaseBuilder {
 	private void buildStatementFromContext(List<XNode> list) {
 		//检测是否配置了数据库当前运行的环境标识
 		if (configuration.getDatabaseId() != null) {
-			//
+			//检测满足当前数据库运行环境标识的sql语句节点
 			buildStatementFromContext(list, configuration.getDatabaseId());
 		}
-		//
+		//检测不需要满足当前数据库运行环境标识对应的sql语句节点
 		buildStatementFromContext(list, null);
 	}
 
 	/*
-	 * 
+	 * 检测给定的sql语句节点是否满足给定数据库运行环境的语句解析
 	 */
 	private void buildStatementFromContext(List<XNode> list, String requiredDatabaseId) {
+		//循环遍历所有的sql语句节点
 		for (XNode context : list) {
+			//创建对应的解析xml中sql语句的构建器对象
 			final XMLStatementBuilder statementParser = new XMLStatementBuilder(configuration, builderAssistant, context, requiredDatabaseId);
 			try {
+				//进行sql语句节点的解析操作处理
 				statementParser.parseStatementNode();
 			} catch (IncompleteElementException e) {
+				//当出现未完成异常时,将对应的解析对象添加到未完成集合中------->期待后期进一步进行解析操作处理
 				configuration.addIncompleteStatement(statementParser);
 			}
 		}
@@ -289,8 +293,10 @@ public class XMLMapperBuilder extends BaseBuilder {
 	 * 解析设置的所有resultMap节点配置信息
 	 */
 	private void resultMapElements(List<XNode> list) throws Exception {
+		//循环遍历所有的resultMap节点
 		for (XNode resultMapNode : list) {
 			try {
+				//进行resultMap节点的解析操作处理
 				resultMapElement(resultMapNode);
 			} catch (IncompleteElementException e) {
 				//ignore, it will be retried
@@ -298,57 +304,99 @@ public class XMLMapperBuilder extends BaseBuilder {
 		}
 	}
 
+	/*
+	 * 解析单个给定的resultMap节点信息
+	 */
 	private ResultMap resultMapElement(XNode resultMapNode) throws Exception {
+		//此处为解析对应的resultMap节点创建了对应的集合进行存储数据
 		return resultMapElement(resultMapNode, Collections.<ResultMapping>emptyList());
 	}
 
+	/*
+	 * 对给定的单个resultMap节点进行具体的解析操作处理
+	 */
 	private ResultMap resultMapElement(XNode resultMapNode, List<ResultMapping> additionalResultMappings) throws Exception {
 		ErrorContext.instance().activity("processing " + resultMapNode.getValueBasedIdentifier());
-		//
+		//获取当前resultMap节点上配置的id唯一标识属性
 		String id = resultMapNode.getStringAttribute("id", resultMapNode.getValueBasedIdentifier());
+		//获取当前resultMap节点上配置的对应java类的类型
 		String type = resultMapNode.getStringAttribute("type", resultMapNode.getStringAttribute("ofType", resultMapNode.getStringAttribute("resultType", resultMapNode.getStringAttribute("javaType"))));
+		//获取当前resultMap节点上配置的继承自那个对应的resultMap节点
 		String extend = resultMapNode.getStringAttribute("extends");
+		//获取当前resultMap节点上配置的自动进行映射标识
 		Boolean autoMapping = resultMapNode.getBooleanAttribute("autoMapping");
+		//获取resultMap对应的java类对应的类型----------------->即最终需要转换成对应的java类的类型
 		Class<?> typeClass = resolveClass(type);
 		Discriminator discriminator = null;
+		//创建用于存储ResultMapping的映射关系对象的集合
 		List<ResultMapping> resultMappings = new ArrayList<ResultMapping>();
+		//
 		resultMappings.addAll(additionalResultMappings);
+		//获取resultMap节点配置的所有子一级节点
 		List<XNode> resultChildren = resultMapNode.getChildren();
+		//循环处理所有的子级节点
 		for (XNode resultChild : resultChildren) {
+			//根据节点名称类型进行区别对待
 			if ("constructor".equals(resultChild.getName())) {
+				//解析配置的对应java类中对应的构建函数的节点配置
 				processConstructorElement(resultChild, typeClass, resultMappings);
 			} else if ("discriminator".equals(resultChild.getName())) {
+				//
 				discriminator = processDiscriminatorElement(resultChild, typeClass, resultMappings);
 			} else {
+				//此处是处理普通类型的resultMapping类型的节点的解析
+				//创建对应的标识集合
 				List<ResultFlag> flags = new ArrayList<ResultFlag>();
+				//检测当前的节点是否是id类型的节点
 				if ("id".equals(resultChild.getName())) {
+					//设置对应的节点时id标识节点类型
 					flags.add(ResultFlag.ID);
 				}
+				//将对应的解析后的resultMapping映射节点添加到对应的映射信息集合中
 				resultMappings.add(buildResultMappingFromContext(resultChild, typeClass, flags));
 			}
 		}
+		//
 		ResultMapResolver resultMapResolver = new ResultMapResolver(builderAssistant, id, typeClass, extend, discriminator, resultMappings, autoMapping);
 		try {
+			//
 			return resultMapResolver.resolve();
 		} catch (IncompleteElementException e) {
+			//
 			configuration.addIncompleteResultMap(resultMapResolver);
+			//
 			throw e;
 		}
 	}
 
+	/*
+	 * 解析resultMap节点中constructor节点的配置信息
+	 *   即对应的java类中对应的构造函数的匹配关系
+	 */
 	private void processConstructorElement(XNode resultChild, Class<?> resultType, List<ResultMapping> resultMappings) throws Exception {
+		//获取constructor节点下的所有节点
 		List<XNode> argChildren = resultChild.getChildren();
+		//循环解析所有的子级节点---------->注意此处循环处理的构造节点中的所有节点数据------>此处的配置与真实java类中的构造函数参数是对应关系
 		for (XNode argChild : argChildren) {
+			//创建对应的存储标识的集合对象
 			List<ResultFlag> flags = new ArrayList<ResultFlag>();
+			//添加当前属性为构造节点类型的标识
 			flags.add(ResultFlag.CONSTRUCTOR);
+			//检测当前节点是否是idArg命名的节点
 			if ("idArg".equals(argChild.getName())) {
+				//添加当前属性为ID类型的标识
 				flags.add(ResultFlag.ID);
 			}
+			//将对应的constructor节点下对应的子级节点转换成对应的resultMapping对象存储到集合中
 			resultMappings.add(buildResultMappingFromContext(argChild, resultType, flags));
 		}
 	}
 
+	/*
+	 * 
+	 */
 	private Discriminator processDiscriminatorElement(XNode context, Class<?> resultType, List<ResultMapping> resultMappings) throws Exception {
+		//获取节点的相关属性值
 		String column = context.getStringAttribute("column");
 		String javaType = context.getStringAttribute("javaType");
 		String jdbcType = context.getStringAttribute("jdbcType");
@@ -436,6 +484,10 @@ public class XMLMapperBuilder extends BaseBuilder {
 		return true;
 	}
 
+	/*
+	 * 根据resultMap节点下配置的子节点来解析对应的子节点,将其转换成对应ResultMapping对象
+	 *   注意本方法是 一般的节点或者对应的构造节点中的子级节点才会进入此处进行分析操作处理,对应discriminator节点不会进入此处进行解析处理
+	 */
 	private ResultMapping buildResultMappingFromContext(XNode context, Class<?> resultType, List<ResultFlag> flags) throws Exception {
 		String property;
 		if (flags.contains(ResultFlag.CONSTRUCTOR)) {
@@ -446,18 +498,24 @@ public class XMLMapperBuilder extends BaseBuilder {
 		String column = context.getStringAttribute("column");
 		String javaType = context.getStringAttribute("javaType");
 		String jdbcType = context.getStringAttribute("jdbcType");
+		
 		String nestedSelect = context.getStringAttribute("select");
+		
 		String nestedResultMap = context.getStringAttribute("resultMap", processNestedResultMappings(context, Collections.<ResultMapping>emptyList()));
+		
 		String notNullColumn = context.getStringAttribute("notNullColumn");
 		String columnPrefix = context.getStringAttribute("columnPrefix");
 		String typeHandler = context.getStringAttribute("typeHandler");
 		String resultSet = context.getStringAttribute("resultSet");
 		String foreignColumn = context.getStringAttribute("foreignColumn");
+		
 		boolean lazy = "lazy".equals(context.getStringAttribute("fetchType", configuration.isLazyLoadingEnabled() ? "lazy" : "eager"));
 		Class<?> javaTypeClass = resolveClass(javaType);
 		@SuppressWarnings("unchecked")
 		Class<? extends TypeHandler<?>> typeHandlerClass = (Class<? extends TypeHandler<?>>) resolveClass(typeHandler);
+		//
 		JdbcType jdbcTypeEnum = resolveJdbcType(jdbcType);
+		//
 		return builderAssistant.buildResultMapping(resultType, property, column, javaTypeClass, jdbcTypeEnum, nestedSelect, nestedResultMap, notNullColumn, columnPrefix, typeHandlerClass, flags, resultSet, foreignColumn, lazy);
 	}
 

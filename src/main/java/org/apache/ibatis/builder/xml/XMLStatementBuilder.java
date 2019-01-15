@@ -19,14 +19,20 @@ import org.apache.ibatis.scripting.LanguageDriver;
 import org.apache.ibatis.session.Configuration;
 
 /**
- * 
+ * 用于解析mapper中xml方式的sql语句节点的解析构建器对象
  */
 public class XMLStatementBuilder extends BaseBuilder {
 
+	//记录对应的解析辅助对象
 	private final MapperBuilderAssistant builderAssistant;
+	//记录当前处理的sql语句节点
 	private final XNode context;
+	//用于记录当前数据库运行的环境标识
 	private final String requiredDatabaseId;
 
+	/*
+	 * 通过函数重载的方式进行构建对象处理
+	 */
 	public XMLStatementBuilder(Configuration configuration, MapperBuilderAssistant builderAssistant, XNode context) {
 		this(configuration, builderAssistant, context, null);
 	}
@@ -38,10 +44,16 @@ public class XMLStatementBuilder extends BaseBuilder {
 		this.requiredDatabaseId = databaseId;
 	}
 
+	/*
+	 * 触发进行解析当前sql语句节点的解析处理
+	 */
 	public void parseStatementNode() {
+		//获取当前sql语句节点对应的id标识
 		String id = context.getStringAttribute("id");
+		//获取当前sql语句节点对应的数据库运行环境标识
 		String databaseId = context.getStringAttribute("databaseId");
 
+		//检测本sql语句节点是否有必要添加到系统中
 		if (!databaseIdMatchesCurrent(id, databaseId, this.requiredDatabaseId)) {
 			return;
 		}
@@ -163,7 +175,7 @@ public class XMLStatementBuilder extends BaseBuilder {
 			// skip this statement if there is a previous one with a not null databaseId
 			id = builderAssistant.applyCurrentNamespace(id, false);
 			if (this.configuration.hasStatement(id, false)) {
-				MappedStatement previous = this.configuration.getMappedStatement(id, false); // issue #2
+				MappedStatement previous = this.configuration.getMappedStatement(id, false);
 				if (previous.getDatabaseId() != null) {
 					return false;
 				}

@@ -154,11 +154,11 @@ public class Configuration {
 	//用于记录所有的sql片段集合
 	protected final Map<String, XNode> sqlFragments = new StrictMap<XNode>("XML fragments parsed from previous mappers");
 
-	//用于存储尚未完成的
+	//用于存储尚未完成的xml中对应的sql语句节点的解析对象
 	protected final Collection<XMLStatementBuilder> incompleteStatements = new LinkedList<XMLStatementBuilder>();
 	//用于存储尚未完成的缓存引用的集合
 	protected final Collection<CacheRefResolver> incompleteCacheRefs = new LinkedList<CacheRefResolver>();
-	//
+	//用于存储尚未完成的xml中对应的ResultMap节点的解析对象
 	protected final Collection<ResultMapResolver> incompleteResultMaps = new LinkedList<ResultMapResolver>();
 	//用于记录解析对应方法处理问题时,未能完成解析操作的处理方法
 	protected final Collection<MethodResolver> incompleteMethods = new LinkedList<MethodResolver>();
