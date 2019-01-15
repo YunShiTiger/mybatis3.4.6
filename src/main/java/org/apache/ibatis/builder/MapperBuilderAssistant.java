@@ -39,7 +39,7 @@ import org.apache.ibatis.type.TypeHandler;
  */
 public class MapperBuilderAssistant extends BaseBuilder {
 
-	//
+	//当前辅助对象mapper对应的命名空间值
 	private String currentNamespace;
 	//
 	private final String resource;
@@ -58,36 +58,49 @@ public class MapperBuilderAssistant extends BaseBuilder {
 		return currentNamespace;
 	}
 
+	/*
+	 * 设置辅助解析当前mapper对应命名空间的处理操作
+	 */
 	public void setCurrentNamespace(String currentNamespace) {
+		//检测给定的命名空间是否为配置空异常问题-------------->即每个mapper都必须有唯一的命名空间值
 		if (currentNamespace == null) {
 			throw new BuilderException("The mapper element requires a namespace attribute to be specified.");
 		}
-
+		
+		//检测设置的命名空间值与当前记录的命名空间值是否匹配---------->不一致抛出对应的异常
 		if (this.currentNamespace != null && !this.currentNamespace.equals(currentNamespace)) {
 			throw new BuilderException("Wrong namespace. Expected '" + this.currentNamespace + "' but found '" + currentNamespace + "'.");
 		}
-
+		//设置辅助对象对应mapper所在的命名空间值
 		this.currentNamespace = currentNamespace;
 	}
 
+	/*
+	 * 对相对名的转换成对应的全限定名-----即装配唯一标识
+	 */
 	public String applyCurrentNamespace(String base, boolean isReference) {
+		//检测带拼接字符串是否为空
 		if (base == null) {
 			return null;
 		}
+		//检测是否使用了相对名称标识
 		if (isReference) {
-			// is it qualified with any namespace yet?
+			//通过检测对应的.符号来确定带拼接的字符串是否是全限定名
 			if (base.contains(".")) {
+				//直接返回对应的字符串数据
 				return base;
 			}
 		} else {
-			// is it qualified with this namespace yet?
+			//检测给定的字符串是否以当前的全限定名开头
 			if (base.startsWith(currentNamespace + ".")) {
 				return base;
 			}
+			//检测设置的相对字符串格式是否有问题----------------->即相对名称不能含有.符号
 			if (base.contains(".")) {
 				throw new BuilderException("Dots are not allowed in element names, please remove it from " + base);
 			}
 		}
+		//拼接唯一的限定名
 		return currentNamespace + "." + base;
 	}
 

@@ -151,21 +151,19 @@ public class Configuration {
 
 	//用于记录已经完成加载的资源配置对象对应的集合
 	protected final Set<String> loadedResources = new HashSet<String>();
-	//
+	//用于记录所有的sql片段集合
 	protected final Map<String, XNode> sqlFragments = new StrictMap<XNode>("XML fragments parsed from previous mappers");
 
-	//
+	//用于存储尚未完成的
 	protected final Collection<XMLStatementBuilder> incompleteStatements = new LinkedList<XMLStatementBuilder>();
-	//
+	//用于存储尚未完成的缓存引用的集合
 	protected final Collection<CacheRefResolver> incompleteCacheRefs = new LinkedList<CacheRefResolver>();
 	//
 	protected final Collection<ResultMapResolver> incompleteResultMaps = new LinkedList<ResultMapResolver>();
 	//用于记录解析对应方法处理问题时,未能完成解析操作的处理方法
 	protected final Collection<MethodResolver> incompleteMethods = new LinkedList<MethodResolver>();
 
-	/*
-	 * A map holds cache-ref relationship. The key is the namespace that references a cache bound to another namespace and the value is the namespace which the actual cache is bound to.
-	 */
+	//记录进行缓存引用的引用关联------------->key为引用缓存的mapper命名空间   value为被引用缓存对应的真实缓存的命名空间
 	protected final Map<String, String> cacheRefMap = new HashMap<String, String>();
 
 	public Configuration(Environment environment) {
