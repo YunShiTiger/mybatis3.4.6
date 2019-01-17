@@ -401,10 +401,14 @@ public class XMLMapperBuilder extends BaseBuilder {
 		String javaType = context.getStringAttribute("javaType");
 		String jdbcType = context.getStringAttribute("jdbcType");
 		String typeHandler = context.getStringAttribute("typeHandler");
+		//
 		Class<?> javaTypeClass = resolveClass(javaType);
+		//
 		@SuppressWarnings("unchecked")
 		Class<? extends TypeHandler<?>> typeHandlerClass = (Class<? extends TypeHandler<?>>) resolveClass(typeHandler);
+		//
 		JdbcType jdbcTypeEnum = resolveJdbcType(jdbcType);
+		//
 		Map<String, String> discriminatorMap = new HashMap<String, String>();
 		for (XNode caseChild : context.getChildren()) {
 			String value = caseChild.getStringAttribute("value");
