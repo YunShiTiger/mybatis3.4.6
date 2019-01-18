@@ -71,6 +71,7 @@ public class MapperMethod {
 					executeWithResultHandler(sqlSession, args);
 					result = null;
 				} else if (method.returnsMany()) {
+					//处理返回多行数据的查询操作
 					result = executeForMany(sqlSession, args);
 				} else if (method.returnsMap()) {
 					result = executeForMap(sqlSession, args);
@@ -134,6 +135,9 @@ public class MapperMethod {
 		}
 	}
 
+	/*
+	 * 根据方法返回类型为多行数据的查询操作处理
+	 */
 	private <E> Object executeForMany(SqlSession sqlSession, Object[] args) {
 		List<E> result;
 		Object param = method.convertArgsToSqlCommandParam(args);
