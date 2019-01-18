@@ -25,9 +25,7 @@ import org.apache.ibatis.session.RowBounds;
 import org.apache.ibatis.session.SqlSession;
 
 /**
- *
- * The default implementation for {@link SqlSession}. Note that this class is
- * not Thread-Safe.
+ * The default implementation for {@link SqlSession}. Note that this class is not Thread-Safe.
  */
 public class DefaultSqlSession implements SqlSession {
 
@@ -80,9 +78,7 @@ public class DefaultSqlSession implements SqlSession {
 	@Override
 	public <K, V> Map<K, V> selectMap(String statement, Object parameter, String mapKey, RowBounds rowBounds) {
 		final List<? extends V> list = selectList(statement, parameter, rowBounds);
-		final DefaultMapResultHandler<K, V> mapResultHandler = new DefaultMapResultHandler<K, V>(mapKey,
-				configuration.getObjectFactory(), configuration.getObjectWrapperFactory(),
-				configuration.getReflectorFactory());
+		final DefaultMapResultHandler<K, V> mapResultHandler = new DefaultMapResultHandler<K, V>(mapKey, configuration.getObjectFactory(), configuration.getObjectWrapperFactory(), configuration.getReflectorFactory());
 		final DefaultResultContext<V> context = new DefaultResultContext<V>();
 		for (V o : list) {
 			context.nextResultObject(o);
@@ -174,11 +170,16 @@ public class DefaultSqlSession implements SqlSession {
 		return update(statement, null);
 	}
 
+	/*
+	 * 进行新增 更新 删除 操作时  最终都需要进入本方法进行相关处理
+	 */
 	@Override
 	public int update(String statement, Object parameter) {
 		try {
 			dirty = true;
+			//根据提供的标识获取对应的MappedStatement对象
 			MappedStatement ms = configuration.getMappedStatement(statement);
+			//最终由执行器来执行对应的MappedStatement对象------------------------>即完成对应sql的执行处理
 			return executor.update(ms, wrapCollection(parameter));
 		} catch (Exception e) {
 			throw ExceptionFactory.wrapException("Error updating database.  Cause: " + e, e);
@@ -271,6 +272,9 @@ public class DefaultSqlSession implements SqlSession {
 		return configuration;
 	}
 
+	/*
+	 * 根据提供的类型获取对应的Mapper对象
+	 */
 	@Override
 	public <T> T getMapper(Class<T> type) {
 		return configuration.<T>getMapper(type, this);

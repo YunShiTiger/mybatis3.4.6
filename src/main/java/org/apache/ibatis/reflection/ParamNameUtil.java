@@ -1,19 +1,3 @@
-/**
- *    Copyright 2009-2017 the original author or authors.
- *
- *    Licensed under the Apache License, Version 2.0 (the "License");
- *    you may not use this file except in compliance with the License.
- *    You may obtain a copy of the License at
- *
- *       http://www.apache.org/licenses/LICENSE-2.0
- *
- *    Unless required by applicable law or agreed to in writing, software
- *    distributed under the License is distributed on an "AS IS" BASIS,
- *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *    See the License for the specific language governing permissions and
- *    limitations under the License.
- */
-
 package org.apache.ibatis.reflection;
 
 import java.lang.reflect.Constructor;
@@ -25,26 +9,44 @@ import java.util.List;
 
 import org.apache.ibatis.lang.UsesJava8;
 
+/*
+ * 用于解析方法参数的真实名称的处理类
+ */
 @UsesJava8
 public class ParamNameUtil {
-  public static List<String> getParamNames(Method method) {
-    return getParameterNames(method);
-  }
+	
+	/*
+	 * 执行获取方法的真实参数名称的列表
+	 */
+	public static List<String> getParamNames(Method method) {
+		return getParameterNames(method);
+	}
 
-  public static List<String> getParamNames(Constructor<?> constructor) {
-    return getParameterNames(constructor);
-  }
+	/*
+	 * 执行获取构造方法的真实参数名称的列表
+	 */
+	public static List<String> getParamNames(Constructor<?> constructor) {
+		return getParameterNames(constructor);
+	}
 
-  private static List<String> getParameterNames(Executable executable) {
-    final List<String> names = new ArrayList<String>();
-    final Parameter[] params = executable.getParameters();
-    for (Parameter param : params) {
-      names.add(param.getName());
-    }
-    return names;
-  }
+	/*
+	 * 获取给定实体对应的参数名称的列表信息
+	 */
+	private static List<String> getParameterNames(Executable executable) {
+		//创建存储参数真实名称的列表对象
+		final List<String> names = new ArrayList<String>();
+		//获取给定实体对应的所有参数数组
+		final Parameter[] params = executable.getParameters();
+		//循环遍历对应的参数数组
+		for (Parameter param : params) {
+			//获取对应参数的真实名称
+			names.add(param.getName());
+		}
+		//返回获取到的真实参数的名称列表
+		return names;
+	}
 
-  private ParamNameUtil() {
-    super();
-  }
+	private ParamNameUtil() {
+		super();
+	}
 }

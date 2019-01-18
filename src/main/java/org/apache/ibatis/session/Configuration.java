@@ -749,10 +749,16 @@ public class Configuration {
 		mapperRegistry.addMapper(type);
 	}
 
+	/*
+	 * 根据对应的Mapper注册器获取对应的Mapper对象
+	 */
 	public <T> T getMapper(Class<T> type, SqlSession sqlSession) {
 		return mapperRegistry.getMapper(type, sqlSession);
 	}
 
+	/*
+	 * 用于检测对应的Mapper类型是否在注册器集合中存在
+	 */
 	public boolean hasMapper(Class<?> type) {
 		return mapperRegistry.hasMapper(type);
 	}

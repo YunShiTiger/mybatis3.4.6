@@ -26,15 +26,19 @@ public class MapperRegistry {
 	}
 
 	/*
-	 * 
+	 * 根据提供的类型获取对应的Mapper对象----------------------->注意这个地方获取的不是接口,而是接口的实现类(通过对应的代理直接来完成的)
 	 */
 	@SuppressWarnings("unchecked")
 	public <T> T getMapper(Class<T> type, SqlSession sqlSession) {
+		//在对应的集合中查找对应Mapper类型的代理工厂对象------------------------>注意这个地方是一个代理的工厂对象
 		final MapperProxyFactory<T> mapperProxyFactory = (MapperProxyFactory<T>) knownMappers.get(type);
+		//检测对应类型的代理工厂是否存在
 		if (mapperProxyFactory == null) {
+			//没有对应类型的Mapper会抛出异常信息
 			throw new BindingException("Type " + type + " is not known to the MapperRegistry.");
 		}
 		try {
+			//此处是真正的创建对应的代理对象的处理---------------------->即接口的代理对象都是在此处进行创建的------------>即通过jdk提供的动态代理来创建对应的代理对象---------->基于接口的代理对象
 			return mapperProxyFactory.newInstance(sqlSession);
 		} catch (Exception e) {
 			throw new BindingException("Error getting mapper instance. Cause: " + e, e);
