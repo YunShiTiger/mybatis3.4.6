@@ -38,11 +38,16 @@ public class BatchExecutor extends BaseExecutor {
 
 	@Override
 	public int doUpdate(MappedStatement ms, Object parameterObject) throws SQLException {
+		//获取配置信息对象
 		final Configuration configuration = ms.getConfiguration();
+		//
 		final StatementHandler handler = configuration.newStatementHandler(this, ms, parameterObject, RowBounds.DEFAULT, null, null);
+		//
 		final BoundSql boundSql = handler.getBoundSql();
+		//获取对应的需要执行的sql语句
 		final String sql = boundSql.getSql();
 		final Statement stmt;
+		//
 		if (sql.equals(currentSql) && ms.equals(currentStatement)) {
 			int last = statementList.size() - 1;
 			stmt = statementList.get(last);
@@ -51,8 +56,11 @@ public class BatchExecutor extends BaseExecutor {
 			BatchResult batchResult = batchResultList.get(last);
 			batchResult.addParameterObject(parameterObject);
 		} else {
+			//
 			Connection connection = getConnection(ms.getStatementLog());
+			//
 			stmt = handler.prepare(connection, transaction.getTimeout());
+			//
 			handler.parameterize(stmt); // fix Issues 322
 			currentSql = sql;
 			currentStatement = ms;

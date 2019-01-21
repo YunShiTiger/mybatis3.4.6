@@ -28,19 +28,23 @@ public class AutomappingTest {
 		//关闭对应的流对象
 		reader.close();
 
-		// populate in-memory database
-		//
+		//下面使用内存级别的数据库操作处理
+		//获取对应的回话对象
 		SqlSession session = sqlSessionFactory.openSession();
-		//
+		//拿到对应于数据库直接的连接
 		Connection conn = session.getConnection();
-		//
+		//加载对应的sql脚本语句
 		reader = Resources.getResourceAsReader("org/apache/ibatis/submitted/automapping/CreateDB.sql");
-		//
+		//创建对应的脚本执行器对象
 		ScriptRunner runner = new ScriptRunner(conn);
 		runner.setLogWriter(null);
+		//执行对应的脚本
 		runner.runScript(reader);
+		//关闭连接对象
 		conn.close();
+		//关闭流对象
 		reader.close();
+		//关闭回话对象
 		session.close();
 	}
 

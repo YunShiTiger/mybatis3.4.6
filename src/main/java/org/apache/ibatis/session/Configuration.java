@@ -562,9 +562,15 @@ public class Configuration {
 		return resultSetHandler;
 	}
 
+	/*
+	 * 创建对应的StatementHandler对象,即使用静态代理机制来创建合适的StatementHandler对象
+	 */
 	public StatementHandler newStatementHandler(Executor executor, MappedStatement mappedStatement, Object parameterObject, RowBounds rowBounds, ResultHandler resultHandler, BoundSql boundSql) {
+		//创建对应的StatementHandler对象的代理对象------------>此对象内部存储了真实的StatementHandler对象
 		StatementHandler statementHandler = new RoutingStatementHandler(executor, mappedStatement, parameterObject, rowBounds, resultHandler, boundSql);
+		//执行对应的插件方法----------->即对StatementHandler对象执行对应的插件集合
 		statementHandler = (StatementHandler) interceptorChain.pluginAll(statementHandler);
+		//返回最终处理后的StatementHandler对象
 		return statementHandler;
 	}
 

@@ -86,6 +86,7 @@ public class MapperMethod {
 				result = sqlSession.flushStatements();
 				break;
 			default:
+				//命令格式不能识别的异常错误
 				throw new BindingException("Unknown execution method for: " + command.getName());
 		}
 		if (result == null && method.getReturnType().isPrimitive() && !method.returnsVoid()) {

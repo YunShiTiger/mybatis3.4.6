@@ -30,7 +30,7 @@ import org.apache.ibatis.transaction.Transaction;
 import org.apache.ibatis.type.TypeHandlerRegistry;
 
 /**
- * 
+ * 执行器的基础实现类------------>对给定接口的方法进行基本实现,然后向下进一步暴露接口
  */
 public abstract class BaseExecutor implements Executor {
 
@@ -95,10 +95,13 @@ public abstract class BaseExecutor implements Executor {
 	@Override
 	public int update(MappedStatement ms, Object parameter) throws SQLException {
 		ErrorContext.instance().resource(ms.getResource()).activity("executing an update").object(ms.getId());
+		//
 		if (closed) {
 			throw new ExecutorException("Executor was closed.");
 		}
+		//进行清除缓存操作处理
 		clearLocalCache();
+		//执行对应的更新操作处理-------->增删改
 		return doUpdate(ms, parameter);
 	}
 
@@ -252,14 +255,6 @@ public abstract class BaseExecutor implements Executor {
 		}
 	}
 
-	protected abstract int doUpdate(MappedStatement ms, Object parameter) throws SQLException;
-
-	protected abstract List<BatchResult> doFlushStatements(boolean isRollback) throws SQLException;
-
-	protected abstract <E> List<E> doQuery(MappedStatement ms, Object parameter, RowBounds rowBounds, ResultHandler resultHandler, BoundSql boundSql) throws SQLException;
-
-	protected abstract <E> Cursor<E> doQueryCursor(MappedStatement ms, Object parameter, RowBounds rowBounds, BoundSql boundSql) throws SQLException;
-
 	protected void closeStatement(Statement statement) {
 		if (statement != null) {
 			try {
@@ -330,6 +325,18 @@ public abstract class BaseExecutor implements Executor {
 	public void setExecutorWrapper(Executor wrapper) {
 		this.wrapper = wrapper;
 	}
+	
+	/*
+	 * 对进行更新操作处理的进一步抽象处理----------->由子类完成真正的操作数据库进行更新操作处理
+	 */
+	protected abstract int doUpdate(MappedStatement ms, Object parameter) throws SQLException;
+
+	protected abstract List<BatchResult> doFlushStatements(boolean isRollback) throws SQLException;
+
+	protected abstract <E> List<E> doQuery(MappedStatement ms, Object parameter, RowBounds rowBounds, ResultHandler resultHandler, BoundSql boundSql) throws SQLException;
+
+	protected abstract <E> Cursor<E> doQueryCursor(MappedStatement ms, Object parameter, RowBounds rowBounds, BoundSql boundSql) throws SQLException;
+	
 
 	private static class DeferredLoad {
 

@@ -29,22 +29,26 @@ import org.apache.ibatis.session.SqlSession;
  */
 public class DefaultSqlSession implements SqlSession {
 
+	//记录对应的配置信息对象
 	private final Configuration configuration;
+	//记录对应的执行器对象
 	private final Executor executor;
-
+	//记录是否进行自动提交的状态标识
 	private final boolean autoCommit;
+	
+	
 	private boolean dirty;
 	private List<Cursor<?>> cursorList;
+	
+	public DefaultSqlSession(Configuration configuration, Executor executor) {
+		this(configuration, executor, false);
+	}
 
 	public DefaultSqlSession(Configuration configuration, Executor executor, boolean autoCommit) {
 		this.configuration = configuration;
 		this.executor = executor;
 		this.dirty = false;
 		this.autoCommit = autoCommit;
-	}
-
-	public DefaultSqlSession(Configuration configuration, Executor executor) {
-		this(configuration, executor, false);
 	}
 
 	@Override
@@ -169,6 +173,16 @@ public class DefaultSqlSession implements SqlSession {
 	public int update(String statement) {
 		return update(statement, null);
 	}
+	
+	@Override
+	public int delete(String statement) {
+		return update(statement, null);
+	}
+
+	@Override
+	public int delete(String statement, Object parameter) {
+		return update(statement, parameter);
+	}
 
 	/*
 	 * 进行新增 更新 删除 操作时  最终都需要进入本方法进行相关处理
@@ -186,16 +200,6 @@ public class DefaultSqlSession implements SqlSession {
 		} finally {
 			ErrorContext.instance().reset();
 		}
-	}
-
-	@Override
-	public int delete(String statement) {
-		return update(statement, null);
-	}
-
-	@Override
-	public int delete(String statement, Object parameter) {
-		return update(statement, parameter);
 	}
 
 	@Override
